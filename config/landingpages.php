@@ -15,5 +15,6 @@ return [
         'token' => env('ONOFFICE_TOKEN'),
         'secret' => env('ONOFFICE_SECRET'),
         'timeout' => (int) env('ONOFFICE_TIMEOUT', 20),
+        'zapier_webhook_url' => env('ONOFFICE_ZAPIER_WEBHOOK_URL'),
     ],
 ];

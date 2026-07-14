@@ -7,6 +7,7 @@ use App\Models\LandingPage;
 use App\Models\Lead;
 use App\Models\Valuation;
 use App\Services\OnOffice\LeadSyncService;
+use App\Services\OnOffice\ZapierLeadSyncService;
 use App\Services\PriceHubble\ValuationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
@@ -18,6 +19,7 @@ class LeadSubmissionController extends Controller
         LandingPage $landingPage,
         ValuationService $valuationService,
         LeadSyncService $leadSyncService,
+        ZapierLeadSyncService $zapierService,
     ): RedirectResponse {
         $data = $request->validated();
 
@@ -59,8 +61,10 @@ class LeadSubmissionController extends Controller
         });
 
         $leadSyncService->sync($lead->fresh(['landingPage', 'property', 'valuation']));
+        $zapierService->send($lead->fresh(['landingPage', 'property', 'valuation']));
 
         return back()->with([
+            'success' => 'Vielen Dank! Ihre Bewertung wurde erstellt.',
             'valuation' => $lead->valuation,
             'report_url' => route('valuation-reports.show', $lead),
         ]);

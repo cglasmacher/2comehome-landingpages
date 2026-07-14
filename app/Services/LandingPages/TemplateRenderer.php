@@ -23,6 +23,7 @@ class TemplateRenderer
                 $landingPage->tracking_overrides ?? []
             ),
             'calendly_url' => $landingPage->calendly_url,
+            'calendly_event_url' => $landingPage->calendly_event_url,
             'valuation_range_percent' => $landingPage->valuation_range_percent ?: config('landingpages.default_range_percent'),
         ];
     }
