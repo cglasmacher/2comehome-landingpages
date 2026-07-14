@@ -51,7 +51,6 @@ class LandingPageSeeder extends Seeder
                     ],
                     'tracking_overrides' => null,
                     'valuation_range_percent' => null,
-                    'calendly_url' => 'https://calendly.com/2comehome/erstberatung',
                     'published_at' => now(),
                 ]
             );

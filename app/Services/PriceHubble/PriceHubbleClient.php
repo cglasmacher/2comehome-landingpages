@@ -28,7 +28,7 @@ class PriceHubbleClient
         }
 
         try {
-            return $this->http
+            $response = $this->http
                 ->post(rtrim($baseUrl, '/') . '/valuations', $payload)
                 ->throw()
                 ->json();
@@ -36,6 +36,41 @@ class PriceHubbleClient
             Log::error('PriceHubble API call failed', ['error' => $e->getMessage()]);
             throw $e;
         }
+
+        // Normalize the response so downstream code can always rely on `estimated_value`,
+        // regardless of the exact field name PriceHubble returns.
+        // TODO: Once the real PriceHubble API docs/credentials are available, verify and
+        // simplify this mapping against the actual response schema.
+        $response['estimated_value'] ??= $this->extractEstimatedValue($response);
+
+        return $response;
+    }
+
+    /**
+     * Best-effort extraction of the estimated value from common PriceHubble-style response shapes.
+     */
+    private function extractEstimatedValue(array $response): ?float
+    {
+        $candidates = [
+            'estimated_value',
+            'estimatedValue',
+            'value',
+            'price',
+            'marketValue.value',
+            'valuation.value',
+            'valuation.estimatedValue',
+            'result.value',
+        ];
+
+        foreach ($candidates as $path) {
+            $value = data_get($response, $path);
+
+            if (is_numeric($value)) {
+                return (float) $value;
+            }
+        }
+
+        return null;
     }
 
     private function fakeValuation(array $payload): array

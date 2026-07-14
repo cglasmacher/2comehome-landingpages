@@ -3,6 +3,7 @@
 return [
     'public_domain' => env('LANDINGPAGE_PUBLIC_DOMAIN', 'verkauf.2comehome.de'),
     'default_range_percent' => (float) env('LANDINGPAGE_DEFAULT_RANGE_PERCENT', 7.5),
+    'calendly_url' => env('CALENDLY_URL'),
 
     'pricehubble' => [
         'base_url' => env('PRICEHUBBLE_BASE_URL'),
@@ -15,6 +16,5 @@ return [
         'token' => env('ONOFFICE_TOKEN'),
         'secret' => env('ONOFFICE_SECRET'),
         'timeout' => (int) env('ONOFFICE_TIMEOUT', 20),
-        'zapier_webhook_url' => env('ONOFFICE_ZAPIER_WEBHOOK_URL'),
     ],
 ];
