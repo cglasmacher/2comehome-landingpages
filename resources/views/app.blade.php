@@ -17,6 +17,7 @@
 
     <link rel="icon" href="/images/favicon-2comehome.png" sizes="32x32">
     @fonts
+    @routes
     @viteReactRefresh
     @vite(['resources/css/app.css', 'resources/js/app.jsx'])
     @inertiaHead

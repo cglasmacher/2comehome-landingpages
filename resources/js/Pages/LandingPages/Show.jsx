@@ -1,5 +1,6 @@
 import { Head, usePage } from '@inertiajs/react';
 import { useState } from 'react';
+import { route } from 'ziggy-js';
 import { ValuationForm } from '@/Components/ValuationForm';
 import ValuationRange from '@/Components/LandingPages/ValuationRange';
 import { CalendlyModal } from '@/Components/CalendlyModal';
