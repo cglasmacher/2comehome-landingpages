@@ -3,7 +3,9 @@
 namespace App\Services\OnOffice;
 
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Throwable;
 
 class OnOfficeClient
 {
@@ -17,7 +19,13 @@ class OnOfficeClient
         $token = (string) config('landingpages.onoffice.token');
         $secret = (string) config('landingpages.onoffice.secret');
 
+        $debug = (bool) config('landingpages.onoffice.debug', true);
+
         if (! $baseUrl || ! $token || ! $secret) {
+            if ($debug) {
+                Log::info('onOffice API skipped: credentials missing. Demo fallback used.');
+            }
+
             return [
                 'status' => 'demo_success',
                 'external_contact_id' => 'demo-' . now()->timestamp,
@@ -40,27 +48,79 @@ class OnOfficeClient
             'parameters' => $parameters,
         ];
 
-        $response = Http::timeout(config('landingpages.onoffice.timeout'))
-            ->acceptJson()
-            ->asJson()
-            ->post($baseUrl, [
-                'token' => $token,
-                'request' => [
-                    'actions' => [$action],
-                ],
-            ])
-            ->throw()
-            ->json();
+        $requestBody = [
+            'token' => $token,
+            'request' => [
+                'actions' => [$action],
+            ],
+        ];
 
-        $result = data_get($response, 'response.results.0');
+        if ($debug) {
+            Log::info('onOffice API request initiated', [
+                'url' => $baseUrl,
+                'identifier' => $identifier,
+                'timestamp' => $timestamp,
+                'request_payload' => $requestBody,
+            ]);
+        }
+
+        try {
+            $httpResponse = Http::timeout(config('landingpages.onoffice.timeout'))
+                ->acceptJson()
+                ->asJson()
+                ->post($baseUrl, $requestBody);
+
+            // Capture the raw body before potential exception so we can log it on errors too.
+            $responseBody = $httpResponse->json() ?? ['raw_body' => $httpResponse->body()];
+
+            if ($debug) {
+                Log::info('onOffice API raw response received', [
+                    'identifier' => $identifier,
+                    'status_code' => $httpResponse->status(),
+                    'response_payload' => $responseBody,
+                ]);
+            }
+
+            $httpResponse->throw();
+        } catch (Throwable $e) {
+            if ($debug) {
+                Log::error('onOffice API request failed', [
+                    'identifier' => $identifier,
+                    'request_payload' => $requestBody,
+                    'response_body' => $responseBody ?? null,
+                    'exception' => $e->getMessage(),
+                ]);
+            }
+
+            throw $e;
+        }
+
+        $result = data_get($responseBody, 'response.results.0');
         $status = data_get($result, 'status.errorcode', 0);
         $recordId = data_get($result, 'data.records.0.id');
 
-        return [
+        $outcome = [
             'status' => (int) $status === 0 ? 'success' : 'failed',
             'external_contact_id' => $recordId,
-            'raw' => $response,
+            'raw' => $responseBody,
         ];
+
+        if ($debug) {
+            if ($outcome['status'] === 'success') {
+                Log::info('onOffice API contact created successfully', [
+                    'identifier' => $identifier,
+                    'external_contact_id' => $recordId,
+                ]);
+            } else {
+                Log::warning('onOffice API returned non-zero errorcode', [
+                    'identifier' => $identifier,
+                    'errorcode' => $status,
+                    'result' => $result,
+                ]);
+            }
+        }
+
+        return $outcome;
     }
 
     /**

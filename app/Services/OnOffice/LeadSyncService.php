@@ -4,6 +4,7 @@ namespace App\Services\OnOffice;
 
 use App\Models\Lead;
 use App\Models\LeadSyncLog;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class LeadSyncService
@@ -29,6 +30,11 @@ class LeadSyncService
         try {
             $response = $this->client->createContactWithRemark($contactPayload, $remark);
 
+            Log::info('onOffice lead sync successful', [
+                'lead_id' => $lead->id,
+                'external_contact_id' => data_get($response, 'external_contact_id'),
+            ]);
+
             return LeadSyncLog::create([
                 'lead_id' => $lead->id,
                 'provider' => 'onoffice',
@@ -39,6 +45,12 @@ class LeadSyncService
             ]);
         } catch (Throwable $e) {
             report($e);
+
+            Log::error('onOffice lead sync failed', [
+                'lead_id' => $lead->id,
+                'error' => $e->getMessage(),
+                'request_payload' => ['contact' => $contactPayload, 'remark' => $remark],
+            ]);
 
             return LeadSyncLog::create([
                 'lead_id' => $lead->id,

@@ -16,5 +16,6 @@ return [
         'token' => env('ONOFFICE_TOKEN'),
         'secret' => env('ONOFFICE_SECRET'),
         'timeout' => (int) env('ONOFFICE_TIMEOUT', 20),
+        'debug' => env('ONOFFICE_DEBUG', true),
     ],
 ];
