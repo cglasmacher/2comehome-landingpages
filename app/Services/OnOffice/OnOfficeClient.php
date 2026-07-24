@@ -9,7 +9,7 @@ use Throwable;
 
 class OnOfficeClient
 {
-    private const ACTION_ID_CREATE = 'urn:onoffice-de-ns:smart:2.5:smartml:action:id:create';
+    private const ACTION_ID_CREATE = 'urn:onoffice-de-ns:smart:2.5:smartml:action:create';
 
     private const RESOURCE_TYPE_ADDRESS = 'address';
 
@@ -151,7 +151,7 @@ class OnOfficeClient
             'Name' => $contactPayload['last_name'] ?? null,
             'email' => $contactPayload['email'] ?? null,
             'phone' => $contactPayload['phone'] ?? null,
-            'kommentar' => $remark,
+            //kommentar' => $remark,
         ], static fn ($value) => $value !== null && $value !== '');
     }
 }
