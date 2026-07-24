@@ -29,19 +29,28 @@ class LeadSyncService
 
         try {
             $response = $this->client->createContactWithRemark($contactPayload, $remark);
+            $status = data_get($response, 'status') === 'success' ? 'success' : 'failed';
 
-            Log::info('onOffice lead sync successful', [
-                'lead_id' => $lead->id,
-                'external_contact_id' => data_get($response, 'external_contact_id'),
-            ]);
+            if ($status === 'success') {
+                Log::info('onOffice lead sync successful', [
+                    'lead_id' => $lead->id,
+                    'external_contact_id' => data_get($response, 'external_contact_id'),
+                ]);
+            } else {
+                Log::error('onOffice lead sync returned API error', [
+                    'lead_id' => $lead->id,
+                    'response' => $response,
+                ]);
+            }
 
             return LeadSyncLog::create([
                 'lead_id' => $lead->id,
                 'provider' => 'onoffice',
-                'status' => 'success',
+                'status' => $status,
                 'external_contact_id' => data_get($response, 'external_contact_id'),
                 'request_payload' => ['contact' => $contactPayload, 'remark' => $remark],
                 'response_payload' => $response,
+                'error_message' => $status === 'failed' ? data_get($response, 'raw.response.results.0.status.message') : null,
             ]);
         } catch (Throwable $e) {
             report($e);
@@ -68,7 +77,7 @@ class LeadSyncService
         $valuation = $lead->valuation;
 
         return trim(sprintf(
-            "Lead aus Landingpage %s\n\nObjekt: %s %s, %s %s\nTyp: %s\nWohnfläche: %s m²\nGrundstück: %s m²\nBaujahr: %s\nZimmer: %s\n\nPriceHubble-Einwertung:\nSchätzwert: %s EUR\nRange: %s EUR bis %s EUR\nRange-Prozent: +/- %s %%\nStatus: %s\n\nCTA Erstberatung: %s\n\nNotiz des Nutzers:\n%s",
+            "Lead aus Landingpage %s\n\nObjekt: %s %s, %s %s\nTyp: %s\nWohnfläche: %s m²\nGrundstück: %s m²\nBaujahr: %s\nZimmer: %s\n\nPriceHubble-Einwertung:\nSchätzwert: %s EUR\nRange: %s EUR bis %s EUR\nRange-Prozent: +/- %s %%\nStatus: %s\n\nTelefonische Kontaktaufnahme erlaubt: %s\n\nNotiz des Nutzers:\n%s",
             $lead->landingPage->slug,
             $property?->street,
             $property?->house_number,
@@ -84,7 +93,7 @@ class LeadSyncService
             $valuation?->range_high ? number_format((float) $valuation->range_high, 0, ',', '.') : 'nicht verfügbar',
             $valuation?->range_percent ?? '-',
             $valuation?->status ?? 'nicht erstellt',
-            $lead->consultation_requested_at ? 'ja' : 'nein',
+            $lead->phone_contact_consent_at ? 'ja' : 'nein',
             $lead->notes ?: '-'
         ));
     }

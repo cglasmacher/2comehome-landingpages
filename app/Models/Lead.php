@@ -15,6 +15,8 @@ class Lead extends Model
         'utm' => 'array',
         'tracking' => 'array',
         'consultation_requested_at' => 'datetime',
+        'phone_contact_consent_at' => 'datetime',
+        'valuation_disclaimer_accepted_at' => 'datetime',
     ];
 
     protected static function booted(): void

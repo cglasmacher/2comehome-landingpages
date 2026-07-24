@@ -32,7 +32,8 @@ class LeadSubmissionController extends Controller
                 'source' => 'landingpage',
                 'utm' => $request->only(['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term']),
                 'tracking' => $request->only(['gclid', 'gbraid', 'wbraid', 'fbclid']),
-                'consultation_requested_at' => $request->boolean('consultation_requested') ? now() : null,
+                'phone_contact_consent_at' => now(),
+                'valuation_disclaimer_accepted_at' => now(),
             ]);
 
             $lead->property()->create(array_merge([

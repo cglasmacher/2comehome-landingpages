@@ -13,6 +13,35 @@ const propertyTypes = [
     { value: 'grundstück', label: 'Grundstück' },
 ];
 
+function ConsentCheckbox({ id, checked, onChange, error, children }) {
+    const errorId = `${id}-error`;
+
+    return (
+        <div className="flex items-start gap-3">
+            <input
+                id={id}
+                type="checkbox"
+                checked={checked}
+                required
+                aria-invalid={Boolean(error)}
+                aria-describedby={error ? errorId : undefined}
+                onChange={(e) => onChange(e.target.checked)}
+                className="mt-1 h-5 w-5 shrink-0 rounded border-(--color-border) text-primary focus:ring-2 focus:ring-primary/50"
+            />
+            <div className="min-w-0">
+                <Label htmlFor={id} className="mb-0 cursor-pointer text-sm font-normal leading-6">
+                    {children}
+                </Label>
+                {error && (
+                    <p id={errorId} className="mt-1 text-sm text-red-600" role="alert">
+                        {error}
+                    </p>
+                )}
+            </div>
+        </div>
+    );
+}
+
 export function ValuationForm({ action, onSuccess }) {
     const { data, setData, post, processing, errors } = useForm({
         first_name: '',
@@ -20,7 +49,8 @@ export function ValuationForm({ action, onSuccess }) {
         email: '',
         phone: '',
         notes: '',
-        consultation_requested: false,
+        phone_contact_consent: false,
+        valuation_disclaimer_accepted: false,
         property: {
             property_type: '',
             street: '',
@@ -218,17 +248,23 @@ export function ValuationForm({ action, onSuccess }) {
                     {inputError('notes')}
                 </div>
 
-                <div className="flex items-start gap-3">
-                    <input
-                        id="consultation_requested"
-                        type="checkbox"
-                        checked={data.consultation_requested}
-                        onChange={(e) => setData('consultation_requested', e.target.checked)}
-                        className="mt-1 h-5 w-5 rounded border-(--color-border) text-primary focus:ring-primary"
-                    />
-                    <Label htmlFor="consultation_requested" className="mb-0 cursor-pointer font-normal">
-                        Ich möchte eine unverbindliche, kostenlose Erstberatung buchen.
-                    </Label>
+                <div className="space-y-3">
+                    <ConsentCheckbox
+                        id="phone_contact_consent"
+                        checked={data.phone_contact_consent}
+                        onChange={(value) => setData('phone_contact_consent', value)}
+                        error={errors.phone_contact_consent}
+                    >
+                        Ich bin damit einverstanden, dass 2 COME HOME Immobilien mich telefonisch kontaktiert.
+                    </ConsentCheckbox>
+                    <ConsentCheckbox
+                        id="valuation_disclaimer_accepted"
+                        checked={data.valuation_disclaimer_accepted}
+                        onChange={(value) => setData('valuation_disclaimer_accepted', value)}
+                        error={errors.valuation_disclaimer_accepted}
+                    >
+                        Ich habe verstanden, dass es sich um eine unverbindliche Ersteinschätzung handelt und daraus kein Anspruch auf einen bestimmten Verkaufspreis entsteht.
+                    </ConsentCheckbox>
                 </div>
 
                 <Button type="submit" isLoading={processing} className="w-full sm:w-auto">
