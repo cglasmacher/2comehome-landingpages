@@ -16,8 +16,8 @@ class StoreLeadRequest extends FormRequest
         return [
             'first_name' => ['nullable', 'string', 'max:100'],
             'last_name' => ['nullable', 'string', 'max:100'],
-            'email' => ['nullable', 'email', 'max:255'],
-            'phone' => ['nullable', 'string', 'max:50'],
+            'email' => ['required', 'email', 'max:255'],
+            'phone' => ['required', 'string', 'max:50'],
             'notes' => ['nullable', 'string', 'max:5000'],
             'phone_contact_consent' => ['required', 'accepted'],
             'valuation_disclaimer_accepted' => ['required', 'accepted'],

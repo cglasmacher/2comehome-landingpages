@@ -1,13 +1,10 @@
 import { Head, usePage } from '@inertiajs/react';
-import { useState } from 'react';
 import { route } from 'ziggy-js';
 import { ValuationForm } from '@/Components/ValuationForm';
-import ValuationRange from '@/Components/LandingPages/ValuationRange';
-import { CalendlyModal } from '@/Components/CalendlyModal';
+import ValuationResult from '@/Components/LandingPages/ValuationResult';
 
 export default function Show() {
-    const { page, valuation, report_url, flash } = usePage().props;
-    const [isCalendlyOpen, setIsCalendlyOpen] = useState(false);
+    const { page, valuation, report_url, lead_summary, flash } = usePage().props;
 
     return (
         <>
@@ -34,6 +31,15 @@ export default function Show() {
                 </header>
 
                 <main className="mx-auto max-w-6xl px-4 py-12">
+                    {valuation ? (
+                        <ValuationResult
+                            valuation={valuation}
+                            summary={lead_summary}
+                            reportUrl={report_url}
+                            calendlyUrl={page.calendly_url}
+                            successMessage={flash?.success}
+                        />
+                    ) : (
                     <div className="grid gap-12 lg:grid-cols-2 lg:items-start">
                         <section>
                             <p className="mb-3 text-sm font-semibold uppercase tracking-wide text-primary">
@@ -70,39 +76,10 @@ export default function Show() {
                         </section>
 
                         <section className="space-y-8">
-                            {flash?.success && (
-                                <div className="rounded-xl bg-green-50 p-4 text-sm text-green-800">
-                                    {flash.success}
-                                </div>
-                            )}
-
-                            {valuation ? (
-                                <>
-                                    <ValuationRange
-                                        valuation={valuation}
-                                        reportUrl={report_url}
-                                    />
-                                    <div className="mt-4">
-                                        {page.calendly_url ? (
-                                            <button
-                                                onClick={() => setIsCalendlyOpen(true)}
-                                                className="btn-primary w-full"
-                                            >
-                                                Kostenlose Erstberatung buchen
-                                            </button>
-                                        ) : null}
-                                    </div>
-                                    <CalendlyModal
-                                        url={page.calendly_url}
-                                        isOpen={isCalendlyOpen}
-                                        onClose={() => setIsCalendlyOpen(false)}
-                                    />
-                                </>
-                            ) : (
-                                <ValuationForm action={route('landing-pages.leads.store', page.slug)} />
-                            )}
+                            <ValuationForm action={route('landing-pages.leads.store', page.slug)} />
                         </section>
                     </div>
+                    )}
                 </main>
 
                 <footer className="border-t border-(--color-border) bg-white py-8">

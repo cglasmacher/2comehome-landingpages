@@ -111,20 +111,22 @@ export function ValuationForm({ action, onSuccess }) {
                         {inputError('last_name')}
                     </div>
                     <div>
-                        <Label htmlFor="email">E-Mail</Label>
+                        <Label htmlFor="email">E-Mail *</Label>
                         <Input
                             id="email"
                             type="email"
+                            required
                             value={data.email}
                             onChange={(e) => setData('email', e.target.value)}
                         />
                         {inputError('email')}
                     </div>
                     <div>
-                        <Label htmlFor="phone">Telefon</Label>
+                        <Label htmlFor="phone">Telefon *</Label>
                         <Input
                             id="phone"
                             type="tel"
+                            required
                             value={data.phone}
                             onChange={(e) => setData('phone', e.target.value)}
                         />
@@ -263,7 +265,7 @@ export function ValuationForm({ action, onSuccess }) {
                         onChange={(value) => setData('valuation_disclaimer_accepted', value)}
                         error={errors.valuation_disclaimer_accepted}
                     >
-                        Ich habe verstanden, dass es sich um eine unverbindliche Ersteinschätzung handelt und daraus kein Anspruch auf einen bestimmten Verkaufspreis entsteht.
+                        Ich habe verstanden, dass es sich um eine unverbindliche Ersteinschätzung handelt, daraus kein Anspruch auf einen bestimmten Verkaufspreis entsteht und ich die Widerrufsbelehrung sowie die Datenschutzerklärung zur Kenntnis genommen habe.
                     </ConsentCheckbox>
                 </div>
 
