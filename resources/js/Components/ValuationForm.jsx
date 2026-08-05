@@ -1,4 +1,5 @@
 import { useForm } from '@inertiajs/react';
+import ValuationProcessingState from '@/Components/LandingPages/ValuationProcessingState';
 import { Card, CardTitle } from './ui/Card';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
@@ -72,7 +73,7 @@ export function ValuationForm({ action, onSuccess }) {
     const submit = (e) => {
         e.preventDefault();
         post(action, {
-            preserveScroll: true,
+            preserveScroll: 'errors',
             onSuccess,
         });
     };
@@ -268,6 +269,8 @@ export function ValuationForm({ action, onSuccess }) {
                         Ich habe verstanden, dass es sich um eine unverbindliche Ersteinschätzung handelt, daraus kein Anspruch auf einen bestimmten Verkaufspreis entsteht und ich die Widerrufsbelehrung sowie die Datenschutzerklärung zur Kenntnis genommen habe.
                     </ConsentCheckbox>
                 </div>
+
+                <ValuationProcessingState isProcessing={processing} />
 
                 <Button type="submit" isLoading={processing} className="w-full sm:w-auto">
                     Immobilie bewerten

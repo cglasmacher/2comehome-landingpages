@@ -34,6 +34,8 @@ export default function ValuationResult({ valuation, summary, reportUrl, calendl
     const property = summary?.property ?? {};
     const firstName = contact.first_name ? `, ${contact.first_name}` : '';
     const estimatedValue = valuation?.estimated_value ? formatCurrency(valuation.estimated_value) : null;
+    const hasRange = Boolean(valuation?.range_low && valuation?.range_high);
+    const isValuationFailed = valuation?.status === 'failed' || !hasRange;
 
     return (
         <div className="overflow-hidden rounded-[2rem] border border-(--color-border) bg-white shadow-xl shadow-black/5">
@@ -61,14 +63,16 @@ export default function ValuationResult({ valuation, summary, reportUrl, calendl
 
                 <div className="order-1 p-6 sm:p-10 lg:order-2 lg:p-12">
                     <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.18em] text-primary">
-                        <span className="h-2 w-2 rounded-full bg-primary" />
-                        Ersteinschätzung abgeschlossen
+                        <span className={`h-2 w-2 rounded-full ${isValuationFailed ? 'bg-(--color-accent)' : 'bg-primary'}`} />
+                        {isValuationFailed ? 'Anfrage eingegangen' : 'Ersteinschätzung abgeschlossen'}
                     </div>
                     <h1 className="mt-5 max-w-xl text-3xl font-bold leading-tight tracking-tight text-(--color-secondary) sm:text-4xl">
-                        Vielen Dank für Ihre Anfrage{firstName}.
+                        {isValuationFailed ? 'Vielen Dank für Ihre Anfrage' : `Vielen Dank für Ihre Anfrage${firstName}.`}
                     </h1>
                     <p className="mt-4 max-w-xl text-base leading-7 text-(--color-muted)">
-                        {successMessage ?? 'Ihre Angaben sind bei uns eingegangen.'} Wir prüfen die Details persönlich und melden uns schnellstmöglich bei Ihnen.
+                        {isValuationFailed
+                            ? 'Ihre Angaben sind sicher bei uns eingegangen. Wir prüfen die Immobilie persönlich und melden uns schnellstmöglich mit den nächsten Schritten.'
+                            : `${successMessage ?? 'Ihre Angaben sind bei uns eingegangen.'} Wir prüfen die Details persönlich und melden uns schnellstmöglich bei Ihnen.`}
                     </p>
 
                     <div className="mt-8">

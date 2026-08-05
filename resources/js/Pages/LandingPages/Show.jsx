@@ -1,7 +1,8 @@
 import { Head, usePage } from '@inertiajs/react';
 import { route } from 'ziggy-js';
-import { ValuationForm } from '@/Components/ValuationForm';
+import JourneySteps from '@/Components/LandingPages/JourneySteps';
 import ValuationResult from '@/Components/LandingPages/ValuationResult';
+import { ValuationForm } from '@/Components/ValuationForm';
 
 export default function Show() {
     const { page, valuation, report_url, lead_summary, flash } = usePage().props;
@@ -40,45 +41,26 @@ export default function Show() {
                             successMessage={flash?.success}
                         />
                     ) : (
-                    <div className="grid gap-12 lg:grid-cols-2 lg:items-start">
-                        <section>
-                            <p className="mb-3 text-sm font-semibold uppercase tracking-wide text-primary">
-                                {page.content?.eyebrow ?? 'Immobilienbewertung'}
-                            </p>
-                            <h1 className="text-4xl font-bold leading-tight text-(--color-secondary) md:text-5xl">
-                                {page.content?.hero_title ?? 'Erfahren Sie den Wert Ihrer Immobilie'}
-                            </h1>
-                            <p className="mt-4 text-lg text-(--color-muted)">
-                                {page.content?.hero_text ??
-                                    'In nur wenigen Schritten erhalten Sie eine fundierte, unverbindliche Markteinschätzung.'}
-                            </p>
+                        <div className="grid gap-12 lg:grid-cols-2 lg:items-start">
+                            <section>
+                                <p className="mb-3 text-sm font-semibold uppercase tracking-wide text-primary">
+                                    {page.content?.eyebrow ?? 'Immobilienbewertung'}
+                                </p>
+                                <h1 className="text-4xl font-bold leading-tight text-(--color-secondary) md:text-5xl">
+                                    {page.content?.hero_title ?? 'Erfahren Sie den Wert Ihrer Immobilie'}
+                                </h1>
+                                <p className="mt-4 text-lg text-(--color-muted)">
+                                    {page.content?.hero_text ??
+                                        'In nur wenigen Schritten erhalten Sie eine fundierte, unverbindliche Markteinschätzung.'}
+                                </p>
 
-                            <ul className="mt-8 space-y-3 text-(--color-foreground)">
-                                <li className="flex items-center gap-3">
-                                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-(--color-primary) text-xs font-bold text-white">
-                                        1
-                                    </span>
-                                    Objektdaten eingeben
-                                </li>
-                                <li className="flex items-center gap-3">
-                                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-(--color-primary) text-xs font-bold text-white">
-                                        2
-                                    </span>
-                                    Sofortigen Wertbereich erhalten
-                                </li>
-                                <li className="flex items-center gap-3">
-                                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-(--color-primary) text-xs font-bold text-white">
-                                        3
-                                    </span>
-                                    Optional Erstberatung buchen
-                                </li>
-                            </ul>
-                        </section>
+                                <JourneySteps />
+                            </section>
 
-                        <section className="space-y-8">
-                            <ValuationForm action={route('landing-pages.leads.store', page.slug)} />
-                        </section>
-                    </div>
+                            <section className="space-y-8">
+                                <ValuationForm action={route('landing-pages.leads.store', page.slug)} />
+                            </section>
+                        </div>
                     )}
                 </main>
 

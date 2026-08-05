@@ -83,36 +83,8 @@ class LeadSubmissionController extends Controller
             ]);
         }
 
-        return back()->with([
-            'success' => 'Vielen Dank! Ihre Bewertung wurde erstellt.',
-            'valuation' => [
-                'estimated_value' => $lead->valuation?->estimated_value,
-                'range_percent' => $lead->valuation?->range_percent,
-                'range_low' => $lead->valuation?->range_low,
-                'range_high' => $lead->valuation?->range_high,
-                'status' => $lead->valuation?->status,
-            ],
-            'lead_summary' => [
-                'contact' => [
-                    'first_name' => $lead->first_name,
-                    'last_name' => $lead->last_name,
-                    'email' => $lead->email,
-                    'phone' => $lead->phone,
-                ],
-                'property' => [
-                    'property_type' => $lead->property?->property_type,
-                    'street' => $lead->property?->street,
-                    'house_number' => $lead->property?->house_number,
-                    'zip' => $lead->property?->zip,
-                    'city' => $lead->property?->city,
-                    'construction_year' => $lead->property?->construction_year,
-                    'living_area' => $lead->property?->living_area,
-                    'plot_area' => $lead->property?->plot_area,
-                    'rooms' => $lead->property?->rooms,
-                ],
-                'notes' => $lead->notes,
-            ],
-            'report_url' => route('valuation-reports.show', $lead),
-        ]);
+        return redirect()
+            ->route('landing-pages.results.show', [$landingPage, $lead])
+            ->with('success', 'Vielen Dank! Ihre Bewertung wurde erstellt.');
     }
 }

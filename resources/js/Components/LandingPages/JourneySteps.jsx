@@ -1,0 +1,47 @@
+const steps = [
+    {
+        number: '01',
+        title: 'Daten eingeben',
+        description: 'und Kontaktaufnahme',
+    },
+    {
+        number: '02',
+        title: 'Einwertung',
+        description: 'und Vermarktung',
+    },
+    {
+        number: '03',
+        title: 'Notar',
+        description: 'und alle glücklich',
+    },
+];
+
+export default function JourneySteps() {
+    return (
+        <div className="mt-10 rounded-[1.75rem] border border-(--color-border) bg-white/80 p-5 shadow-sm sm:p-6">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Ihr Weg mit 2 COME HOME</p>
+            <ol aria-label="Ablauf der Immobilienvermarktung" className="mt-6 grid gap-6 md:grid-cols-3 md:gap-0">
+                {steps.map((step, index) => (
+                    <li
+                        key={step.number}
+                        className={`relative flex gap-4 md:block md:px-5 ${index === 0 ? 'md:pl-0' : ''} ${index === steps.length - 1 ? 'md:pr-0' : ''}`}
+                    >
+                        {index < steps.length - 1 && (
+                            <span
+                                aria-hidden="true"
+                                className="absolute left-5 top-11 z-0 h-[calc(100%+1.5rem)] w-px bg-primary/20 md:left-1/2 md:top-5 md:h-px md:w-[calc(100%+2.5rem)]"
+                            />
+                        )}
+                        <span className="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-primary bg-white text-xs font-bold tracking-[0.08em] text-primary md:mx-auto">
+                            {step.number}
+                        </span>
+                        <div className="relative z-10 pt-0.5 md:mt-4 md:text-center">
+                            <h2 className="text-sm font-bold text-(--color-secondary)">{step.title}</h2>
+                            <p className="mt-1 text-sm text-(--color-muted)">{step.description}</p>
+                        </div>
+                    </li>
+                ))}
+            </ol>
+        </div>
+    );
+}
