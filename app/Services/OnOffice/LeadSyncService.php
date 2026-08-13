@@ -9,6 +9,8 @@ use Throwable;
 
 class LeadSyncService
 {
+    private const OWNER_RELATION_TYPE = 'urn:onoffice-de-ns:smart:2.5:relationTypes:estate:address:owner';
+
     public function __construct(private readonly OnOfficeClient $client) {}
 
     public function sync(Lead $lead): LeadSyncLog
@@ -24,51 +26,67 @@ class LeadSyncService
             'utm' => $lead->utm,
             'tracking' => $lead->tracking,
         ];
-
+        $propertyPayload = $this->buildPropertyPayload($lead);
         $remark = $this->buildRemark($lead);
+        $estateNote = 'Landing Page Lead aus ' . $lead->landingPage->slug;
+        $requestPayload = [
+            'contact' => $contactPayload,
+            'remark' => $remark,
+            'estate' => ['property' => $propertyPayload, 'internal_note' => $estateNote],
+            'relation' => ['relationtype' => self::OWNER_RELATION_TYPE],
+        ];
+
+        $contactResponse = null;
+        $estateResponse = null;
+        $relationResponse = null;
+        $contactId = null;
+        $estateId = null;
 
         try {
-            $response = $this->client->createContactWithRemark($contactPayload, $remark);
-            $status = data_get($response, 'status') === 'success' ? 'success' : 'failed';
+            $contactResponse = $this->client->createContactWithRemark($contactPayload, $remark);
+            $contactId = data_get($contactResponse, 'external_contact_id');
 
-            if ($status === 'success') {
-                Log::info('onOffice lead sync successful', [
-                    'lead_id' => $lead->id,
-                    'external_contact_id' => data_get($response, 'external_contact_id'),
-                ]);
-            } else {
-                Log::error('onOffice lead sync returned API error', [
-                    'lead_id' => $lead->id,
-                    'response' => $response,
-                ]);
+            if (! $this->isSuccessful($contactResponse) || ! filled($contactId)) {
+                return $this->finish($lead, 'failed', $contactId, null, $requestPayload, $contactResponse, $estateResponse, $relationResponse, $this->responseError($contactResponse) ?? 'onOffice contact ID was not returned.');
             }
 
-            return LeadSyncLog::create([
-                'lead_id' => $lead->id,
-                'provider' => 'onoffice',
-                'status' => $status,
-                'external_contact_id' => data_get($response, 'external_contact_id'),
-                'request_payload' => ['contact' => $contactPayload, 'remark' => $remark],
-                'response_payload' => $response,
-                'error_message' => $status === 'failed' ? data_get($response, 'raw.response.results.0.status.message') : null,
-            ]);
+            $estateResponse = $this->client->createEstate($propertyPayload, $estateNote);
+            $estateId = data_get($estateResponse, 'external_estate_id');
+
+            if (! $this->isSuccessful($estateResponse) || ! filled($estateId)) {
+                return $this->finish($lead, 'partial', $contactId, $estateId, $requestPayload, $contactResponse, $estateResponse, $relationResponse, $this->responseError($estateResponse) ?? 'onOffice estate ID was not returned.');
+            }
+
+            $relationResponse = $this->client->createOwnerRelation((string) $estateId, (string) $contactId);
+            $status = $this->isSuccessful($relationResponse)
+                ? ($this->isDemoSync($contactResponse, $estateResponse, $relationResponse) ? 'demo_success' : 'success')
+                : 'partial';
+
+            return $this->finish($lead, $status, $contactId, $estateId, $requestPayload, $contactResponse, $estateResponse, $relationResponse, $status === 'partial' ? $this->responseError($relationResponse) : null);
         } catch (Throwable $e) {
             report($e);
 
-            Log::error('onOffice lead sync failed', [
-                'lead_id' => $lead->id,
-                'error' => $e->getMessage(),
-                'request_payload' => ['contact' => $contactPayload, 'remark' => $remark],
-            ]);
-
-            return LeadSyncLog::create([
-                'lead_id' => $lead->id,
-                'provider' => 'onoffice',
-                'status' => 'failed',
-                'request_payload' => ['contact' => $contactPayload, 'remark' => $remark],
-                'error_message' => $e->getMessage(),
-            ]);
+            return $this->finish($lead, filled($contactId) ? 'partial' : 'failed', $contactId, $estateId, $requestPayload, $contactResponse, $estateResponse, $relationResponse, $e->getMessage());
         }
+    }
+
+    /** @return array<string, mixed> */
+    private function buildPropertyPayload(Lead $lead): array
+    {
+        $property = $lead->property;
+
+        return array_filter([
+            'property_type' => $property?->property_type,
+            'street' => $property?->street,
+            'house_number' => $property?->house_number,
+            'zip' => $property?->zip,
+            'city' => $property?->city,
+            'country' => $property?->country ?? 'DE',
+            'construction_year' => $property?->construction_year,
+            'living_area' => $property?->living_area,
+            'plot_area' => $property?->plot_area,
+            'rooms' => $property?->rooms,
+        ], static fn ($value) => $value !== null && $value !== '');
     }
 
     private function buildRemark(Lead $lead): string
@@ -78,23 +96,54 @@ class LeadSyncService
 
         return trim(sprintf(
             "Lead aus Landingpage %s\n\nObjekt: %s %s, %s %s\nTyp: %s\nWohnfläche: %s m²\nGrundstück: %s m²\nBaujahr: %s\nZimmer: %s\n\nPriceHubble-Einwertung:\nSchätzwert: %s EUR\nRange: %s EUR bis %s EUR\nRange-Prozent: +/- %s %%\nStatus: %s\n\nTelefonische Kontaktaufnahme erlaubt: %s\n\nNotiz des Nutzers:\n%s",
-            $lead->landingPage->slug,
-            $property?->street,
-            $property?->house_number,
-            $property?->zip,
-            $property?->city,
-            $property?->property_type,
-            $property?->living_area,
-            $property?->plot_area,
-            $property?->construction_year,
-            $property?->rooms,
+            $lead->landingPage->slug, $property?->street, $property?->house_number, $property?->zip, $property?->city,
+            $property?->property_type, $property?->living_area, $property?->plot_area, $property?->construction_year, $property?->rooms,
             $valuation?->estimated_value ? number_format((float) $valuation->estimated_value, 0, ',', '.') : 'nicht verfügbar',
             $valuation?->range_low ? number_format((float) $valuation->range_low, 0, ',', '.') : 'nicht verfügbar',
             $valuation?->range_high ? number_format((float) $valuation->range_high, 0, ',', '.') : 'nicht verfügbar',
-            $valuation?->range_percent ?? '-',
-            $valuation?->status ?? 'nicht erstellt',
-            $lead->phone_contact_consent_at ? 'ja' : 'nein',
-            $lead->notes ?: '-'
+            $valuation?->range_percent ?? '-', $valuation?->status ?? 'nicht erstellt',
+            $lead->phone_contact_consent_at ? 'ja' : 'nein', $lead->notes ?: '-',
         ));
+    }
+
+    private function isSuccessful(?array $response): bool
+    {
+        return in_array(data_get($response, 'status'), ['success', 'demo_success'], true);
+    }
+
+    private function isDemoSync(?array ...$responses): bool
+    {
+        return collect($responses)->every(static fn (?array $response): bool => data_get($response, 'status') === 'demo_success');
+    }
+
+    private function responseError(?array $response): ?string
+    {
+        return data_get($response, 'raw.response.results.0.status.message') ?? data_get($response, 'message');
+    }
+
+    private function finish(Lead $lead, string $status, ?string $contactId, ?string $estateId, array $requestPayload, ?array $contactResponse, ?array $estateResponse, ?array $relationResponse, ?string $errorMessage): LeadSyncLog
+    {
+        Log::log(in_array($status, ['success', 'demo_success'], true) ? 'info' : 'error', 'onOffice lead sync completed', [
+            'lead_id' => $lead->id,
+            'status' => $status,
+            'external_contact_id' => $contactId,
+            'external_estate_id' => $estateId,
+            'error' => $errorMessage,
+        ]);
+
+        return LeadSyncLog::create([
+            'lead_id' => $lead->id,
+            'provider' => 'onoffice',
+            'status' => $status,
+            'external_contact_id' => $contactId,
+            'external_estate_id' => $estateId,
+            'request_payload' => $requestPayload,
+            'response_payload' => [
+                'contact' => $contactResponse,
+                'estate' => $estateResponse,
+                'relation' => $relationResponse,
+            ],
+            'error_message' => $errorMessage,
+        ]);
     }
 }

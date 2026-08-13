@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { CalendlyModal } from '@/Components/CalendlyModal';
+import JourneySteps from '@/Components/LandingPages/JourneySteps';
 import { Button } from '@/Components/ui/Button';
 import { Card } from '@/Components/ui/Card';
 import ValuationRange from '@/Components/LandingPages/ValuationRange';
@@ -74,6 +75,10 @@ export default function ValuationResult({ valuation, summary, reportUrl, calendl
                             ? 'Ihre Angaben sind sicher bei uns eingegangen. Wir prüfen die Immobilie persönlich und melden uns schnellstmöglich mit den nächsten Schritten.'
                             : `${successMessage ?? 'Ihre Angaben sind bei uns eingegangen.'} Wir prüfen die Details persönlich und melden uns schnellstmöglich bei Ihnen.`}
                     </p>
+
+                    <div className="mt-8">
+                        <JourneySteps activeStep={2} className="mt-0" />
+                    </div>
 
                     <div className="mt-8">
                         <ValuationRange valuation={valuation} reportUrl={reportUrl} />

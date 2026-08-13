@@ -54,7 +54,7 @@ export default function Show() {
                                         'In nur wenigen Schritten erhalten Sie eine fundierte, unverbindliche Markteinschätzung.'}
                                 </p>
 
-                                <JourneySteps />
+                                <JourneySteps activeStep={1} />
                             </section>
 
                             <section className="space-y-8">
