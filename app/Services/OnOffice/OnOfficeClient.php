@@ -91,12 +91,32 @@ class OnOfficeClient
             ];
         }
 
-        $outcome = $this->executeAction(
-            self::RESOURCE_TYPE_ESTATE,
-            ['data' => $this->buildEstateParameters(
-                $propertyPayload, $internalNote, (string) $status2Resolution['value'], (int) $userResolution['value'],
-            )],
+        $data = $this->buildEstateParameters(
+            $propertyPayload, $internalNote, (string) $status2Resolution['value'], (int) $userResolution['value'],
         );
+        $configuration = $this->estateFields();
+        if ($configuration['status'] !== 'success') {
+            return ['status' => 'failed', 'external_estate_id' => null,
+                'message' => $configuration['message'], 'raw' => []];
+        }
+        $noteField = trim((string) config('landingpages.onoffice.estate_note_field', 'interne_Bemerkung'));
+        if ($noteField !== '' && ! isset($configuration['fields'][$noteField])) {
+            unset($data[$noteField]);
+            Log::warning('onOffice optional estate note field unavailable', [
+                'field' => $noteField,
+                'message' => 'Internal source note retained in lead_sync_logs; not sent to an unknown or public field.',
+            ]);
+        }
+        $unknownFields = array_values(array_diff(array_keys($data), array_keys($configuration['fields'])));
+        if ($unknownFields !== []) {
+            $message = 'Unknown or inactive onOffice estate fields: '.implode(', ', $unknownFields);
+            Log::error('onOffice estate field validation failed', ['fields' => $unknownFields, 'message' => $message]);
+
+            return ['status' => 'failed', 'external_estate_id' => null, 'message' => $message,
+                'raw' => ['unknown_fields' => $unknownFields]];
+        }
+
+        $outcome = $this->executeAction(self::RESOURCE_TYPE_ESTATE, ['data' => $data]);
 
         return [
             'status' => $outcome['status'],
@@ -245,44 +265,11 @@ class OnOfficeClient
     private function resolveEstateStatus2(bool $refresh = false): array
     {
         $label = trim((string) config('landingpages.onoffice.estate_status2_label', 'in akquise'));
-        $cacheKey = $this->cacheKey('status2.'.Str::lower($label));
-        $cachedValue = $refresh ? null : Cache::get($cacheKey);
-
-        if (filled($cachedValue)) {
-            return [
-                'status' => 'success',
-                'value' => (string) $cachedValue,
-                'raw' => ['cached' => true, 'label' => $label],
-            ];
-        }
-
-        try {
-            $outcome = $this->executeAction(self::RESOURCE_TYPE_FIELDS, [
-                'labels' => true,
-                'language' => 'DEU',
-                'modules' => ['estate'],
-                'fieldList' => ['status2'],
-            ], self::ACTION_ID_GET);
-        } catch (Throwable $e) {
-            return [
-                'status' => 'failed',
-                'value' => null,
-                'raw' => ['exception' => $e->getMessage(), 'label' => $label],
-                'error' => 'onOffice status2 field configuration request failed: '.$e->getMessage(),
-            ];
-        }
-
-        $module = collect(data_get($outcome, 'raw.response.results.0.data.records', []))->firstWhere('id', 'estate');
-        $field = data_get($module, 'elements.status2', []);
-        $permittedValues = data_get($field, 'permittedvalues', []);
-
-        if ($outcome['status'] !== 'success' || ! is_array($permittedValues)) {
-            return [
-                'status' => 'failed',
-                'value' => null,
-                'raw' => $outcome['raw'],
-                'error' => $outcome['message'] ?? 'onOffice status2 field configuration did not return permitted values.',
-            ];
+        $configuration = $this->estateFields($refresh);
+        $permittedValues = data_get($configuration, 'fields.status2.permittedvalues', []);
+        if ($configuration['status'] !== 'success' || ! is_array($permittedValues)) {
+            return ['status' => 'failed', 'value' => null, 'raw' => [],
+                'error' => $configuration['message'] ?? 'onOffice status2 field configuration did not return permitted values.'];
         }
 
         $normalizedLabel = Str::lower($label);
@@ -297,23 +284,18 @@ class OnOfficeClient
             }
 
             $resolvedValue = (string) $value;
-            Cache::put(
-                $cacheKey,
-                $resolvedValue,
-                now()->addSeconds(max(60, (int) config('landingpages.onoffice.estate_status2_cache_ttl', 86400))),
-            );
 
             return [
                 'status' => 'success',
                 'value' => $resolvedValue,
-                'raw' => ['cached' => false, 'label' => $label, 'value' => $resolvedValue, 'response' => $outcome['raw']],
+                'raw' => ['label' => $label, 'value' => $resolvedValue],
             ];
         }
 
         return [
             'status' => 'failed',
             'value' => null,
-            'raw' => ['label' => $label, 'permittedvalues' => $permittedValues, 'response' => $outcome['raw']],
+            'raw' => ['label' => $label, 'permittedvalues' => $permittedValues],
             'error' => sprintf('onOffice status2 value "%s" was not found.', $label),
         ];
     }
@@ -335,7 +317,10 @@ class OnOfficeClient
             throw new InvalidArgumentException('Missing ISO alpha-3 country mapping for onOffice.');
         }
 
-        return array_filter(array_merge($types[$type] ?? [], [
+        $noteField = trim((string) config('landingpages.onoffice.estate_note_field', 'interne_Bemerkung'));
+        $noteData = $noteField === '' ? [] : [$noteField => $internalNote];
+
+        return array_filter(array_merge($noteData, $types[$type] ?? [], [
             'status' => self::INACTIVE_ESTATE_STATUS,
             'status2' => $status2,
             'benutzer' => $userId,
@@ -350,7 +335,6 @@ class OnOfficeClient
             'wohnflaeche' => $propertyPayload['living_area'] ?? null,
             'grundstuecksflaeche' => $propertyPayload['plot_area'] ?? null,
             'anzahl_zimmer' => $propertyPayload['rooms'] ?? null,
-            'interne_Bemerkung' => $internalNote,
         ]), static fn ($value) => $value !== null && $value !== '');
     }
 
@@ -429,6 +413,63 @@ class OnOfficeClient
         return ['status' => 'success', 'value' => $id];
     }
 
+    /** Only actual field definitions are accepted; the module label is not a field. */
+    private function estateFields(bool $refresh = false): array
+    {
+        $key = $this->cacheKey('fields.v1');
+        if ($refresh) {
+            Cache::forget($key);
+        } else {
+            $cached = Cache::get($key);
+            if (is_array($cached) && $cached !== []) {
+                return ['status' => 'success', 'fields' => $cached, 'message' => null];
+            }
+        }
+        $outcome = $this->executeAction(self::RESOURCE_TYPE_FIELDS, [
+            'labels' => true, 'language' => 'DEU', 'modules' => ['estate'],
+        ], self::ACTION_ID_GET);
+        $module = collect(data_get($outcome, 'raw.response.results.0.data.records', []))->firstWhere('id', 'estate');
+        $fields = data_get($module, 'elements', []);
+        $fields = is_array($fields) ? array_filter($fields, static fn ($field) => is_array($field) && isset($field['type'])) : [];
+        if ($outcome['status'] !== 'success' || $fields === []) {
+            return ['status' => 'failed', 'fields' => [],
+                'message' => $outcome['message'] ?? 'onOffice did not return estate field definitions.'];
+        }
+        Cache::put($key, $fields, now()->addSeconds(max(60, (int) config('landingpages.onoffice.estate_status2_cache_ttl', 86400))));
+
+        return ['status' => 'success', 'fields' => $fields, 'message' => null];
+    }
+
+    private function diagnoseEstateFields(array $configuration): array
+    {
+        if ($configuration['status'] !== 'success') {
+            return ['status' => 'failed', 'message' => $configuration['message']];
+        }
+        // Check every field that the form can send, without using real lead data.
+        $expected = array_keys($this->buildEstateParameters([
+            'property_type' => 'einfamilienhaus', 'street' => '-', 'house_number' => '-',
+            'zip' => '-', 'city' => '-', 'construction_year' => 2000,
+            'living_area' => 1, 'plot_area' => 1, 'rooms' => 1,
+        ], '-', '-', 1));
+        $noteField = trim((string) config('landingpages.onoffice.estate_note_field', 'interne_Bemerkung'));
+        $unknown = array_values(array_diff($expected, array_keys($configuration['fields']), [$noteField]));
+        $candidates = [];
+        foreach ($configuration['fields'] as $name => $field) {
+            $label = (string) ($field['label'] ?? '');
+            if (Str::contains(Str::lower($name.' '.$label), ['bemerk', 'intern', 'notiz'])) {
+                $candidates[$name] = $label;
+            }
+        }
+
+        return [
+            'status' => $unknown === [] ? 'success' : 'failed',
+            'unknown_fields' => $unknown,
+            'note_field' => $noteField,
+            'note_field_available' => $noteField !== '' && isset($configuration['fields'][$noteField]),
+            'note_field_candidates' => $candidates,
+        ];
+    }
+
     /** Read-only: no contacts, estates or relations are created. */
     public function diagnose(): array
     {
@@ -444,6 +485,7 @@ class OnOfficeClient
                 'permittedvalues' => data_get($status2, 'raw.permittedvalues'),
             ],
             'user' => $this->resolveEstateUser(true),
+            'estate_fields' => $this->diagnoseEstateFields($this->estateFields()),
         ];
     }
 

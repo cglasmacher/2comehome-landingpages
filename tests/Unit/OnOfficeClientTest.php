@@ -67,7 +67,7 @@ class OnOfficeClientTest extends TestCase
             return $action['actionid'] === 'urn:onoffice-de-ns:smart:2.5:smartml:action:get'
                 && $action['resourcetype'] === 'fields'
                 && $action['parameters']['modules'] === ['estate']
-                && $action['parameters']['fieldList'] === ['status2'];
+                && ! isset($action['parameters']['fieldList']);
         });
     }
 
@@ -245,6 +245,64 @@ class OnOfficeClientTest extends TestCase
         Http::assertSentCount(2);
     }
 
+    public function test_missing_optional_note_does_not_block_estate_or_leak_into_public_text(): void
+    {
+        Log::spy();
+        $fields = $this->fieldConfigurationResponse(['in_akquise' => 'In Akquise']);
+        unset($fields['response']['results'][0]['data']['records'][0]['elements']['interne_Bemerkung']);
+        Http::fake(['*' => Http::sequence()->push($fields)->push($this->successResponse('42'))]);
+        $response = app(OnOfficeClient::class)->createEstate(['property_type' => 'einfamilienhaus'], 'Private source note');
+        $this->assertSame('success', $response['status']);
+        Http::assertSent(function ($request) {
+            $action = $request->data()['request']['actions'][0];
+
+            return $action['resourcetype'] === 'estate'
+                && ! array_key_exists('interne_Bemerkung', $action['parameters']['data'])
+                && ! in_array('Private source note', $action['parameters']['data'], true)
+                && $action['parameters']['data']['status2'] === 'in_akquise'
+                && $action['parameters']['data']['benutzer'] === 17;
+        });
+        Log::shouldHaveReceived('warning')->withArgs(fn ($message, $context) => $context['field'] === 'interne_Bemerkung')->once();
+    }
+
+    public function test_unknown_property_field_is_named_before_any_estate_write(): void
+    {
+        $fields = $this->fieldConfigurationResponse(['in_akquise' => 'In Akquise']);
+        unset($fields['response']['results'][0]['data']['records'][0]['elements']['hausnummer']);
+        Http::fake(['*' => Http::response($fields)]);
+        $response = app(OnOfficeClient::class)->createEstate(['house_number' => '39'], '');
+        $this->assertSame('failed', $response['status']);
+        $this->assertSame(['hausnummer'], $response['raw']['unknown_fields']);
+        $this->assertStringContainsString('hausnummer', $response['message']);
+        Http::assertSentCount(1);
+    }
+
+    public function test_diagnosis_reports_optional_and_required_fields_and_internal_candidates(): void
+    {
+        $fields = $this->fieldConfigurationResponse(['in_akquise' => 'In Akquise']);
+        $elements = &$fields['response']['results'][0]['data']['records'][0]['elements'];
+        unset($elements['interne_Bemerkung'], $elements['hausnummer']);
+        $elements['custom_private'] = ['type' => 'freetext', 'label' => 'Interne Notiz'];
+        Http::fake(['*' => Http::response($fields)]);
+        $result = app(OnOfficeClient::class)->diagnose();
+        $this->assertSame('success', $result['status2']['status']);
+        $this->assertSame('failed', $result['estate_fields']['status']);
+        $this->assertSame(['hausnummer'], $result['estate_fields']['unknown_fields']);
+        $this->assertFalse($result['estate_fields']['note_field_available']);
+        $this->assertSame(['custom_private' => 'Interne Notiz'], $result['estate_fields']['note_field_candidates']);
+        Http::assertSentCount(1);
+    }
+
+    public function test_configured_internal_field_is_used_only_when_present(): void
+    {
+        config()->set('landingpages.onoffice.estate_note_field', 'private_note');
+        $fields = $this->fieldConfigurationResponse(['in_akquise' => 'In Akquise']);
+        $fields['response']['results'][0]['data']['records'][0]['elements']['private_note'] = ['type' => 'freetext'];
+        Http::fake(['*' => Http::sequence()->push($fields)->push($this->successResponse('42'))]);
+        $this->assertSame('success', app(OnOfficeClient::class)->createEstate([], 'Internal source')['status']);
+        Http::assertSent(fn ($request) => data_get($request->data(), 'request.actions.0.parameters.data.private_note') === 'Internal source');
+    }
+
     /** @param array<string, string> $permittedValues */
     private function fieldConfigurationResponse(array $permittedValues): array
     {
@@ -255,12 +313,16 @@ class OnOfficeClientTest extends TestCase
                     'data' => [
                         'records' => [[
                             'id' => 'estate',
-                            'elements' => [
+                            'elements' => array_merge(array_fill_keys([
+                                'objektart', 'objekttyp', 'status', 'benutzer', 'nutzungsart', 'vermarktungsart',
+                                'strasse', 'hausnummer', 'plz', 'ort', 'land', 'baujahr', 'wohnflaeche',
+                                'grundstuecksflaeche', 'anzahl_zimmer', 'interne_Bemerkung',
+                            ], ['type' => 'freetext']), [
                                 'status2' => [
                                     'type' => 'singleselect',
                                     'permittedvalues' => $permittedValues,
                                 ],
-                            ],
+                            ]),
                         ]],
                     ],
                 ]],
