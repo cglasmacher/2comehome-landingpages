@@ -17,5 +17,7 @@ return [
         'secret' => env('ONOFFICE_SECRET'),
         'timeout' => (int) env('ONOFFICE_TIMEOUT', 20),
         'debug' => env('ONOFFICE_DEBUG', true),
+        'estate_status2_label' => env('ONOFFICE_ESTATE_STATUS2_LABEL', 'in akquise'),
+        'estate_status2_cache_ttl' => (int) env('ONOFFICE_ESTATE_STATUS2_CACHE_TTL', 86400),
     ],
 ];

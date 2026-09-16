@@ -32,7 +32,12 @@ class LeadSyncService
         $requestPayload = [
             'contact' => $contactPayload,
             'remark' => $remark,
-            'estate' => ['property' => $propertyPayload, 'internal_note' => $estateNote],
+            'estate' => [
+                'property' => $propertyPayload,
+                'internal_note' => $estateNote,
+                'status' => 2,
+                'status2_label' => config('landingpages.onoffice.estate_status2_label', 'in akquise'),
+            ],
             'relation' => ['relationtype' => self::OWNER_RELATION_TYPE],
         ];
 
