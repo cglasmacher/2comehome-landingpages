@@ -6,11 +6,14 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use InvalidArgumentException;
 use Throwable;
 
 class OnOfficeClient
 {
     private const ACTION_ID_CREATE = 'urn:onoffice-de-ns:smart:2.5:smartml:action:create';
+
+    private const ACTION_ID_READ = 'urn:onoffice-de-ns:smart:2.5:smartml:action:read';
 
     private const ACTION_ID_GET = 'urn:onoffice-de-ns:smart:2.5:smartml:action:get';
 
@@ -29,7 +32,7 @@ class OnOfficeClient
     public function createContactWithRemark(array $contactPayload, string $remark): array
     {
         if (! $this->hasCredentials()) {
-            return $this->demoOutcome('contact');
+            return $this->missingCredentials('contact');
         }
 
         $outcome = $this->executeAction(
@@ -40,6 +43,7 @@ class OnOfficeClient
         return [
             'status' => $outcome['status'],
             'external_contact_id' => $outcome['record_id'],
+            'message' => $outcome['message'],
             'raw' => $outcome['raw'],
         ];
     }
@@ -47,18 +51,24 @@ class OnOfficeClient
     /**
      * Create an onOffice estate from the lead's property details.
      *
-     * @param array<string, mixed> $propertyPayload
+     * @param  array<string, mixed>  $propertyPayload
      * @return array{status: string, external_estate_id: string|null, raw?: array<string, mixed>}
      */
     public function createEstate(array $propertyPayload, string $internalNote): array
     {
         if (! $this->hasCredentials()) {
-            return $this->demoOutcome('estate');
+            return $this->missingCredentials('estate');
         }
 
         $status2Resolution = $this->resolveEstateStatus2();
 
         if ($status2Resolution['status'] !== 'success' || ! filled($status2Resolution['value'])) {
+            Log::error('onOffice estate status2 resolution failed', [
+                'message' => $status2Resolution['error'] ?? 'Unknown status2 error',
+                'label' => config('landingpages.onoffice.estate_status2_label'),
+                'permittedvalues' => data_get($status2Resolution, 'raw.permittedvalues'),
+            ]);
+
             return [
                 'status' => 'failed',
                 'external_estate_id' => null,
@@ -69,15 +79,30 @@ class OnOfficeClient
             ];
         }
 
+        $userResolution = $this->resolveEstateUser();
+        if ($userResolution['status'] !== 'success') {
+            Log::error('onOffice estate user resolution failed', ['message' => $userResolution['message']]);
+
+            return [
+                'status' => 'failed',
+                'external_estate_id' => null,
+                'message' => $userResolution['message'],
+                'raw' => ['user_resolution' => $userResolution],
+            ];
+        }
+
         $outcome = $this->executeAction(
             self::RESOURCE_TYPE_ESTATE,
-            $this->buildEstateParameters($propertyPayload, $internalNote, (string) $status2Resolution['value']),
+            ['data' => $this->buildEstateParameters(
+                $propertyPayload, $internalNote, (string) $status2Resolution['value'], (int) $userResolution['value'],
+            )],
         );
 
         return [
             'status' => $outcome['status'],
             'external_estate_id' => $outcome['record_id'],
             'status2_resolution' => $status2Resolution['raw'],
+            'message' => $outcome['message'],
             'raw' => $outcome['raw'],
         ];
     }
@@ -91,19 +116,21 @@ class OnOfficeClient
     {
         if (! $this->hasCredentials()) {
             return [
-                'status' => 'demo_success',
-                'raw' => ['demo' => true, 'relationtype' => self::OWNER_RELATION_TYPE],
+                'status' => 'failed',
+                'message' => 'onOffice credentials are missing.',
+                'raw' => [],
             ];
         }
 
         $outcome = $this->executeAction(self::RESOURCE_TYPE_RELATION, [
             'relationtype' => self::OWNER_RELATION_TYPE,
-            'parentid' => $estateId,
-            'childid' => $contactId,
+            'parentid' => [$estateId],
+            'childid' => [$contactId],
         ]);
 
         return [
             'status' => $outcome['status'],
+            'message' => $outcome['message'],
             'raw' => $outcome['raw'],
         ];
     }
@@ -116,7 +143,7 @@ class OnOfficeClient
     }
 
     /**
-     * @param array<string, mixed> $parameters
+     * @param  array<string, mixed>  $parameters
      * @return array{status: string, record_id: string|null, raw: array<string, mixed>}
      */
     private function executeAction(string $resourceType, array $parameters, string $actionId = self::ACTION_ID_CREATE): array
@@ -152,70 +179,74 @@ class OnOfficeClient
                 'identifier' => $identifier,
                 'resource_type' => $resourceType,
                 'timestamp' => $timestamp,
-                'parameter_keys' => array_keys($parameters),
+                'parameter_keys' => array_keys($parameters['data'] ?? $parameters),
             ]);
         }
 
         try {
-            $httpResponse = Http::timeout(config('landingpages.onoffice.timeout'))
-                ->acceptJson()
-                ->asJson()
-                ->post($baseUrl, $requestBody);
-
-            $responseBody = $httpResponse->json() ?? ['raw_body' => $httpResponse->body()];
-
-            if ($debug) {
-                Log::info('onOffice API raw response received', [
-                    'identifier' => $identifier,
-                    'resource_type' => $resourceType,
-                    'status_code' => $httpResponse->status(),
-                    'errorcode' => data_get($responseBody, 'response.results.0.status.errorcode'),
-                ]);
-            }
-
-            $httpResponse->throw();
+            $httpResponse = Http::timeout(config('landingpages.onoffice.timeout', 20))
+                ->acceptJson()->asJson()->post($baseUrl, $requestBody);
         } catch (Throwable $e) {
-            if ($debug) {
-                Log::error('onOffice API request failed', [
-                    'identifier' => $identifier,
-                    'resource_type' => $resourceType,
-                    'exception' => $e->getMessage(),
-                ]);
-            }
+            // Do not retry creates automatically: a timeout may follow a successful remote write.
+            $message = 'onOffice transport error ('.class_basename($e).'). Remote outcome unknown; check onOffice before retrying.';
+            Log::error('onOffice API transport failed', [
+                'identifier' => $identifier, 'resource_type' => $resourceType,
+                'action_id' => $actionId, 'message' => $message,
+            ]);
 
-            throw $e;
+            return ['status' => 'failed', 'record_id' => null, 'message' => $message, 'raw' => []];
         }
 
-        $result = data_get($responseBody, 'response.results.0', []);
-        $errorCode = (int) data_get($result, 'status.errorcode', 0);
+        $body = $httpResponse->json();
+        $body = is_array($body) ? $body : [];
+        $result = data_get($body, 'response.results.0');
+        $globalCode = data_get($body, 'status.errorcode');
+        $globalStatus = data_get($body, 'status.code');
+        $actionCode = data_get($result, 'status.errorcode');
         $recordId = data_get($result, 'data.records.0.id');
-        $status = $errorCode === 0 ? 'success' : 'failed';
+        $message = null;
 
-        if ($debug) {
-            Log::log($status === 'success' ? 'info' : 'warning', 'onOffice API action completed', [
-                'identifier' => $identifier,
-                'resource_type' => $resourceType,
-                'record_id' => $recordId,
-                'errorcode' => $errorCode,
-                'message' => data_get($result, 'status.message'),
+        if (! $httpResponse->successful()) {
+            $message = 'onOffice HTTP error '.$httpResponse->status();
+        } elseif (($globalCode !== null && (string) $globalCode !== '0')
+            || ($globalStatus !== null && (string) $globalStatus !== '200')) {
+            $message = (string) (data_get($body, 'status.message') ?: 'onOffice request rejected.');
+        } elseif (! is_array($result) || $actionCode === null) {
+            $message = 'onOffice returned an invalid response or no action status.';
+        } elseif ((string) $actionCode !== '0') {
+            $message = (string) (data_get($result, 'status.message') ?: 'onOffice action rejected.');
+        } elseif ($actionId === self::ACTION_ID_CREATE
+            && in_array($resourceType, [self::RESOURCE_TYPE_ADDRESS, self::RESOURCE_TYPE_ESTATE], true)
+            && (! is_scalar($recordId) || ! filled($recordId) || (string) $recordId === '0')) {
+            $message = 'onOffice create response did not contain a record ID.';
+        }
+
+        $status = $message === null ? 'success' : 'failed';
+        if ($debug || $status === 'failed') {
+            Log::log($status === 'success' ? 'info' : 'error', 'onOffice API action completed', [
+                'identifier' => $identifier, 'resource_type' => $resourceType, 'action_id' => $actionId,
+                'http_status' => $httpResponse->status(), 'status' => $status,
+                'global_errorcode' => $globalCode, 'errorcode' => $actionCode,
+                'record_id' => is_scalar($recordId) ? $recordId : null, 'message' => $message,
             ]);
         }
 
         return [
             'status' => $status,
-            'record_id' => $recordId,
-            'raw' => $responseBody,
+            'record_id' => is_scalar($recordId) && filled($recordId) ? (string) $recordId : null,
+            'message' => $message,
+            'raw' => $body,
         ];
     }
 
     /**
      * @return array{status: string, value: string|null, raw: array<string, mixed>, error?: string}
      */
-    private function resolveEstateStatus2(): array
+    private function resolveEstateStatus2(bool $refresh = false): array
     {
         $label = trim((string) config('landingpages.onoffice.estate_status2_label', 'in akquise'));
-        $cacheKey = 'onoffice.estate.status2.' . md5(Str::lower($label));
-        $cachedValue = Cache::get($cacheKey);
+        $cacheKey = $this->cacheKey('status2.'.Str::lower($label));
+        $cachedValue = $refresh ? null : Cache::get($cacheKey);
 
         if (filled($cachedValue)) {
             return [
@@ -237,11 +268,12 @@ class OnOfficeClient
                 'status' => 'failed',
                 'value' => null,
                 'raw' => ['exception' => $e->getMessage(), 'label' => $label],
-                'error' => 'onOffice status2 field configuration request failed: ' . $e->getMessage(),
+                'error' => 'onOffice status2 field configuration request failed: '.$e->getMessage(),
             ];
         }
 
-        $field = data_get($outcome, 'raw.response.results.0.data.records.0.elements.status2', []);
+        $module = collect(data_get($outcome, 'raw.response.results.0.data.records', []))->firstWhere('id', 'estate');
+        $field = data_get($module, 'elements.status2', []);
         $permittedValues = data_get($field, 'permittedvalues', []);
 
         if ($outcome['status'] !== 'success' || ! is_array($permittedValues)) {
@@ -249,7 +281,7 @@ class OnOfficeClient
                 'status' => 'failed',
                 'value' => null,
                 'raw' => $outcome['raw'],
-                'error' => 'onOffice status2 field configuration did not return permitted values.',
+                'error' => $outcome['message'] ?? 'onOffice status2 field configuration did not return permitted values.',
             ];
         }
 
@@ -287,30 +319,43 @@ class OnOfficeClient
     }
 
     /**
-     * @param array<string, mixed> $propertyPayload
+     * @param  array<string, mixed>  $propertyPayload
      * @return array<string, mixed>
      */
-    private function buildEstateParameters(array $propertyPayload, string $internalNote, string $status2): array
+    private function buildEstateParameters(array $propertyPayload, string $internalNote, string $status2, int $userId): array
     {
-        return array_filter([
+        $type = Str::lower(trim((string) ($propertyPayload['property_type'] ?? '')));
+        $types = config('landingpages.onoffice.property_types', []);
+        if ($type !== '' && ! isset($types[$type])) {
+            throw new InvalidArgumentException('Unsupported onOffice property type. Check landingpages.onoffice.property_types.');
+        }
+        $country = strtoupper($propertyPayload['country'] ?? 'DE');
+        $country = config('landingpages.onoffice.country_codes.'.$country, $country);
+        if (! preg_match('/^[A-Z]{3}$/', $country)) {
+            throw new InvalidArgumentException('Missing ISO alpha-3 country mapping for onOffice.');
+        }
+
+        return array_filter(array_merge($types[$type] ?? [], [
             'status' => self::INACTIVE_ESTATE_STATUS,
             'status2' => $status2,
-            'objektart' => $propertyPayload['property_type'] ?? null,
+            'benutzer' => $userId,
+            'nutzungsart' => 'wohnen',
+            'vermarktungsart' => 'kauf',
             'strasse' => $propertyPayload['street'] ?? null,
             'hausnummer' => $propertyPayload['house_number'] ?? null,
             'plz' => $propertyPayload['zip'] ?? null,
             'ort' => $propertyPayload['city'] ?? null,
-            'land' => $propertyPayload['country'] ?? null,
+            'land' => $country,
             'baujahr' => $propertyPayload['construction_year'] ?? null,
             'wohnflaeche' => $propertyPayload['living_area'] ?? null,
             'grundstuecksflaeche' => $propertyPayload['plot_area'] ?? null,
             'anzahl_zimmer' => $propertyPayload['rooms'] ?? null,
             'interne_Bemerkung' => $internalNote,
-        ], static fn ($value) => $value !== null && $value !== '');
+        ]), static fn ($value) => $value !== null && $value !== '');
     }
 
     /**
-     * @param array<string, mixed> $contactPayload
+     * @param  array<string, mixed>  $contactPayload
      * @return array<string, mixed>
      */
     private function buildAddressParameters(array $contactPayload, string $remark): array
@@ -320,27 +365,85 @@ class OnOfficeClient
             'Name' => $contactPayload['last_name'] ?? null,
             'email' => $contactPayload['email'] ?? null,
             'phone' => $contactPayload['phone'] ?? null,
-            //'kommentar' => $remark, */ This field is commented out because it is not supported by the onOffice API for address creation.
+            // 'kommentar' => $remark, */ This field is commented out because it is not supported by the onOffice API for address creation.
         ], static fn ($value) => $value !== null && $value !== '');
     }
 
     /**
      * @return array{status: string, external_contact_id?: string, external_estate_id?: string, raw: array<string, mixed>}
      */
-    private function demoOutcome(string $resource): array
+    private function missingCredentials(string $resource): array
     {
-        $id = 'demo-' . $resource . '-' . now()->timestamp;
-
-        if ((bool) config('landingpages.onoffice.debug', true)) {
-            Log::info('onOffice API skipped: credentials missing. Demo fallback used.', [
-                'resource_type' => $resource,
-            ]);
-        }
+        $message = 'onOffice base URL, token or secret is missing. No data was sent.';
+        Log::error('onOffice credentials missing', ['resource_type' => $resource]);
 
         return [
-            'status' => 'demo_success',
-            $resource === 'contact' ? 'external_contact_id' : 'external_estate_id' => $id,
-            'raw' => ['demo' => true, 'resource_type' => $resource],
+            'status' => 'failed',
+            $resource === 'contact' ? 'external_contact_id' : 'external_estate_id' => null,
+            'message' => $message,
+            'raw' => [],
+        ];
+    }
+
+    private function cacheKey(string $suffix): string
+    {
+        return 'onoffice.estate.'.hash('sha256', config('landingpages.onoffice.base_url').'|'
+            .config('landingpages.onoffice.token').'|'.$suffix);
+    }
+
+    private function resolveEstateUser(bool $refresh = false): array
+    {
+        $configured = config('landingpages.onoffice.estate_user_id');
+        if (filled($configured)) {
+            if (! ctype_digit((string) $configured) || (int) $configured <= 0) {
+                return ['status' => 'failed', 'message' => 'ONOFFICE_ESTATE_USER_ID must be a positive numeric user ID.'];
+            }
+
+            return ['status' => 'success', 'value' => (int) $configured];
+        }
+        $initials = trim((string) config('landingpages.onoffice.estate_user_initials', 'CG'));
+        if ($initials === '') {
+            return ['status' => 'failed', 'message' => 'ONOFFICE_ESTATE_USER_INITIALS is empty.'];
+        }
+        $key = $this->cacheKey('user.'.Str::lower($initials));
+        $cached = $refresh ? null : Cache::get($key);
+        if (filled($cached)) {
+            return ['status' => 'success', 'value' => (int) $cached];
+        }
+        $outcome = $this->executeAction('user', [
+            'data' => ['Kuerzel'],
+            'filter' => ['Kuerzel' => [['op' => '=', 'val' => $initials]]],
+            'listlimit' => 500,
+        ], self::ACTION_ID_READ);
+        if ($outcome['status'] !== 'success') {
+            return ['status' => 'failed', 'message' => $outcome['message'].' Enable API user read permission or set ONOFFICE_ESTATE_USER_ID.'];
+        }
+        $users = collect(data_get($outcome, 'raw.response.results.0.data.records', []))
+            ->filter(fn ($user) => Str::lower(trim((string) data_get($user, 'elements.Kuerzel'))) === Str::lower($initials));
+        if ($users->count() !== 1 || ! ctype_digit((string) data_get($users->first(), 'id')) || (int) data_get($users->first(), 'id') <= 0) {
+            return ['status' => 'failed', 'message' => 'onOffice user initials did not resolve to exactly one user. Set ONOFFICE_ESTATE_USER_ID.'];
+        }
+        $id = (int) $users->first()['id'];
+        Cache::put($key, $id, now()->addDay());
+
+        return ['status' => 'success', 'value' => $id];
+    }
+
+    /** Read-only: no contacts, estates or relations are created. */
+    public function diagnose(): array
+    {
+        if (! $this->hasCredentials()) {
+            return ['credentials' => ['status' => 'failed', 'message' => 'onOffice credentials are missing.']];
+        }
+        $status2 = $this->resolveEstateStatus2(true);
+
+        return [
+            'status2' => [
+                'status' => $status2['status'], 'value' => $status2['value'],
+                'message' => $status2['error'] ?? null,
+                'permittedvalues' => data_get($status2, 'raw.permittedvalues'),
+            ],
+            'user' => $this->resolveEstateUser(true),
         ];
     }
 
@@ -351,7 +454,7 @@ class OnOfficeClient
      */
     private function createHmac(string $token, string $secret, int $timestamp, string $resourceType, string $actionId): string
     {
-        $fields = $timestamp . $token . $resourceType . $actionId;
+        $fields = $timestamp.$token.$resourceType.$actionId;
 
         return base64_encode(hash_hmac('sha256', $fields, $secret, true));
     }

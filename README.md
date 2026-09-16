@@ -56,3 +56,55 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+## onOffice: Immobilienanlage und Diagnose
+
+Neue Immobilien werden mit `status=2` (inaktiv), dem mandantenspezifischen
+Status-2-Schluessel fuer **In Akquise** und dem Benutzer **CG** angelegt.
+`CG` wird ueber `user.Kuerzel` eindeutig auf eine numerische ID aufgeloest.
+Der API-Benutzer braucht hierfuer das Recht **Benutzerdaten ueber API auslesen**.
+Alternativ `ONOFFICE_ESTATE_USER_ID` mit der verifizierten numerischen ID von CG
+setzen; dann entfaellt der Benutzer-Leseaufruf. Keine Beispiel-ID uebernehmen.
+
+Nach dem Deployment (mit der PHP-Version des Projekts, mindestens 8.3):
+
+```bash
+php artisan migrate --force
+php artisan config:cache
+php artisan onoffice:diagnose
+```
+
+Die Diagnose liest nur Feldkonfiguration und Benutzer, erneuert deren lokalen
+Cache und schreibt das Ergebnis in die Konsole und das konfigurierte Laravel-Log
+(standardmaessig `storage/logs/laravel.log`). Sie legt keine Datensaetze an.
+Bei fehlender/eindeutig nicht aufloesbarer Konfiguration endet sie mit Exit-Code 1.
+Ein Erfolg bestaetigt die Konfiguration, nicht die Schreibrechte oder eine echte Anlage.
+
+Optionale `.env`-Einstellungen:
+
+```dotenv
+ONOFFICE_DEBUG=true
+ONOFFICE_ESTATE_STATUS2_LABEL="In Akquise"
+ONOFFICE_ESTATE_USER_INITIALS=CG
+ONOFFICE_ESTATE_USER_ID=
+```
+
+API-Fehler werden auch bei `ONOFFICE_DEBUG=false` protokolliert, einschliesslich
+HTTP-Status, globalem/Aktions-Fehlercode und Request-Identifier. Kontakt- und
+Immobilien-IDs sowie der fehlgeschlagene Schritt stehen im Sync-Abschlusslog.
+Details der Antworten stehen weiterhin in `lead_sync_logs.response_payload`.
+Fehlende Zugangsdaten ergeben einen Fehler, keinen vorgetaeuschten Demo-Erfolg.
+
+Die Formular-Objekttypen werden in `config/landingpages.php` auf `objektart` und
+`objekttyp` abgebildet; Laendercodes werden dort auf ISO alpha-3 umgewandelt.
+Bei abweichenden mandantenspezifischen Auswahlwerten diese Zuordnung anpassen.
+
+Nach erfolgreicher Diagnose einmal einen neuen Testlead ueber das Formular senden
+und Kontakt, Immobilie (inaktiv / In Akquise / CG) sowie Eigentuemer-Verknuepfung
+in onOffice kontrollieren. Bestehende Teilerfolge nicht blind erneut senden:
+Der Sync hat noch keine Duplikaterkennung. Insbesondere nach einem Timeout kann
+ein Datensatz bereits angelegt sein; deshalb erfolgen keine automatischen Retries.
+
+Token/Secret gehoeren ausschliesslich in die Server-Konfiguration. Aus dem
+Beispiel wurden vorbelegte Werte entfernt. Falls diese echt waren, muessen sie
+in onOffice erneuert werden; alte Git-Commits enthalten weiterhin die alten Werte.
