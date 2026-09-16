@@ -22,13 +22,13 @@ class LeadSyncService
             'last_name' => $lead->last_name,
             'email' => $lead->email,
             'phone' => $lead->phone,
-            'source' => 'Landingpage: ' . $lead->landingPage->slug,
+            'source' => 'Landingpage: '.$lead->landingPage->slug,
             'utm' => $lead->utm,
             'tracking' => $lead->tracking,
         ];
         $propertyPayload = $this->buildPropertyPayload($lead);
         $remark = $this->buildRemark($lead);
-        $estateNote = 'Landing Page Lead aus ' . $lead->landingPage->slug;
+        $estateNote = 'Landing Page Lead aus '.$lead->landingPage->slug;
         $requestPayload = [
             'contact' => $contactPayload,
             'remark' => $remark,
@@ -47,7 +47,9 @@ class LeadSyncService
         $contactId = null;
         $estateId = null;
 
+        $stage = 'contact';
         try {
+            Log::info('onOffice lead sync started', ['lead_id' => $lead->id]);
             $contactResponse = $this->client->createContactWithRemark($contactPayload, $remark);
             $contactId = data_get($contactResponse, 'external_contact_id');
 
@@ -55,6 +57,7 @@ class LeadSyncService
                 return $this->finish($lead, 'failed', $contactId, null, $requestPayload, $contactResponse, $estateResponse, $relationResponse, $this->responseError($contactResponse) ?? 'onOffice contact ID was not returned.');
             }
 
+            $stage = 'estate';
             $estateResponse = $this->client->createEstate($propertyPayload, $estateNote);
             $estateId = data_get($estateResponse, 'external_estate_id');
 
@@ -62,6 +65,7 @@ class LeadSyncService
                 return $this->finish($lead, 'partial', $contactId, $estateId, $requestPayload, $contactResponse, $estateResponse, $relationResponse, $this->responseError($estateResponse) ?? 'onOffice estate ID was not returned.');
             }
 
+            $stage = 'owner_relation';
             $relationResponse = $this->client->createOwnerRelation((string) $estateId, (string) $contactId);
             $status = $this->isSuccessful($relationResponse)
                 ? ($this->isDemoSync($contactResponse, $estateResponse, $relationResponse) ? 'demo_success' : 'success')
@@ -69,7 +73,10 @@ class LeadSyncService
 
             return $this->finish($lead, $status, $contactId, $estateId, $requestPayload, $contactResponse, $estateResponse, $relationResponse, $status === 'partial' ? $this->responseError($relationResponse) : null);
         } catch (Throwable $e) {
-            report($e);
+            Log::error('onOffice lead sync exception', [
+                'lead_id' => $lead->id, 'stage' => $stage, 'exception_type' => get_class($e),
+                'message' => $e->getMessage(),
+            ]);
 
             return $this->finish($lead, filled($contactId) ? 'partial' : 'failed', $contactId, $estateId, $requestPayload, $contactResponse, $estateResponse, $relationResponse, $e->getMessage());
         }
@@ -123,7 +130,9 @@ class LeadSyncService
 
     private function responseError(?array $response): ?string
     {
-        return data_get($response, 'raw.response.results.0.status.message') ?? data_get($response, 'message');
+        return data_get($response, 'message')
+            ?? data_get($response, 'raw.status.message')
+            ?? data_get($response, 'raw.response.results.0.status.message');
     }
 
     private function finish(Lead $lead, string $status, ?string $contactId, ?string $estateId, array $requestPayload, ?array $contactResponse, ?array $estateResponse, ?array $relationResponse, ?string $errorMessage): LeadSyncLog
@@ -133,6 +142,7 @@ class LeadSyncService
             'status' => $status,
             'external_contact_id' => $contactId,
             'external_estate_id' => $estateId,
+            'stage' => ! filled($contactId) ? 'contact' : (! filled($estateId) ? 'estate' : 'owner_relation'),
             'error' => $errorMessage,
         ]);
 
