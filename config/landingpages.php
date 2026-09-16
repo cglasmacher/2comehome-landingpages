@@ -17,6 +17,7 @@ return [
         'secret' => env('ONOFFICE_SECRET'),
         'timeout' => (int) env('ONOFFICE_TIMEOUT', 20),
         'debug' => env('ONOFFICE_DEBUG', true),
+        'estate_note_field' => env('ONOFFICE_ESTATE_NOTE_FIELD', 'interne_Bemerkung'),
         'estate_user_id' => env('ONOFFICE_ESTATE_USER_ID'),
         'estate_user_initials' => env('ONOFFICE_ESTATE_USER_INITIALS', 'CG'),
         'country_codes' => ['DE' => 'DEU', 'AT' => 'AUT', 'CH' => 'CHE'],

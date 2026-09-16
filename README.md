@@ -108,3 +108,20 @@ ein Datensatz bereits angelegt sein; deshalb erfolgen keine automatischen Retrie
 Token/Secret gehoeren ausschliesslich in die Server-Konfiguration. Aus dem
 Beispiel wurden vorbelegte Werte entfernt. Falls diese echt waren, muessen sie
 in onOffice erneuert werden; alte Git-Commits enthalten weiterhin die alten Werte.
+
+### Fehler 143: Unknown field in estate data
+
+Vor jeder Immobilienanlage werden die gesendeten Feldnamen mit der aktiven
+onOffice-Feldkonfiguration abgeglichen. Die Konfiguration wird pro API-Zugang
+zwischengespeichert; `php artisan onoffice:diagnose` liest sie frisch ein.
+Die Diagnose enthaelt jetzt `estate_fields.unknown_fields` und moegliche interne
+Notizfelder samt Beschriftung. Unbekannte Immobilienfelder fuehren zu einem
+lokalen Fehler mit konkretem Feldnamen, ohne einen Immobilien-Schreibaufruf.
+
+Ausnahme ist die optionale, automatisch erzeugte Herkunftsnotiz: Ist das bisher
+verwendete Feld `interne_Bemerkung` nicht vorhanden, wird die Notiz mit einer
+Log-Warnung nur im lokalen Sync-Protokoll behalten. Sie wird nicht in ein
+anderes (moeglicherweise oeffentliches) Textfeld umgeleitet. Wenn ein geeignetes
+internes Feld verifiziert wurde, kann dessen exakter API-Name mit
+`ONOFFICE_ESTATE_NOTE_FIELD` gesetzt werden; danach `php artisan config:cache`.
+Status, Bearbeiter und eingegebene Immobiliendaten werden nicht still entfernt.
