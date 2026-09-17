@@ -28,7 +28,7 @@ class LeadSyncService
         ];
         $propertyPayload = $this->buildPropertyPayload($lead);
         $remark = $this->buildRemark($lead);
-        $estateNote = 'Landing Page Lead aus '.$lead->landingPage->slug;
+        $estateNote = 'Landingpage Lead von '.$lead->landingPage->slug;
         $requestPayload = [
             'contact' => $contactPayload,
             'remark' => $remark,

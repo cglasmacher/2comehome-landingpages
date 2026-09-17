@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\Lead;
+use App\Models\LeadMailDelivery;
 
 class LeadValuationViewData
 {
@@ -43,6 +44,7 @@ class LeadValuationViewData
                 ],
                 'notes' => $lead->notes,
             ],
+            'email_status' => LeadMailDelivery::where('lead_id', $lead->id)->where('audience', 'prospect')->value('status'),
             'report_url' => route('valuation-reports.show', $lead),
         ];
     }

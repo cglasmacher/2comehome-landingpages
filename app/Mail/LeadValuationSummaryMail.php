@@ -3,10 +3,13 @@
 namespace App\Mail;
 
 use App\Models\Lead;
+use App\Services\Pdf\ValuationReportPdfService;
+use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
+use Illuminate\Mail\Mailables\Address;
 use Illuminate\Queue\SerializesModels;
 
 class LeadValuationSummaryMail extends Mailable
@@ -22,6 +25,7 @@ class LeadValuationSummaryMail extends Mailable
     {
         return new Envelope(
             subject: 'Ihre Immobilien-Einschätzung von 2 COME HOME Immobilien',
+            replyTo: [new Address(config('landingpages.lead_notification_email'))],
         );
     }
 
@@ -34,6 +38,9 @@ class LeadValuationSummaryMail extends Mailable
 
     public function attachments(): array
     {
-        return [];
+        return [Attachment::fromData(
+            fn () => app(ValuationReportPdfService::class)->bytes($this->lead),
+            'Immobilienbewertung-'.$this->lead->uuid.'.pdf',
+        )->withMime('application/pdf')];
     }
 }

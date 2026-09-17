@@ -125,3 +125,50 @@ anderes (moeglicherweise oeffentliches) Textfeld umgeleitet. Wenn ein geeignetes
 internes Feld verifiziert wurde, kann dessen exakter API-Name mit
 `ONOFFICE_ESTATE_NOTE_FIELD` gesetzt werden; danach `php artisan config:cache`.
 Status, Bearbeiter und eingegebene Immobiliendaten werden nicht still entfernt.
+
+### Lead-Mails und neue Landingpage (Deployment)
+
+Die interne onOffice-Notiz lautet `Landingpage Lead von {slug}`. Das Standardfeld
+ist jetzt `InterneBemerkung`; eine vorhandene Umgebungsvariable hat Vorrang.
+Interessenten und Team erhalten separate E-Mails mit dem Bewertungs-PDF als Anhang.
+Der Team-Empfänger ist standardmäßig `c.glasmacher@2comehome.de`, überschreibbar
+mit `LEAD_NOTIFICATION_EMAIL`. Antworten auf die Team-Mail gehen an den Interessenten.
+
+Nach dem Merge und Plesk-Pull im Projektverzeichnis ausführen:
+
+```sh
+php artisan migrate --force
+npm install
+npm run build
+php artisan config:cache
+php artisan leads:mail-status
+```
+
+Die PHP-Version des Projekts verwenden. Vorher Datenbank sichern. Die neue
+Migration ergänzt nur die Versandtabelle. SMTP in Plesk/.env mit den tatsächlichen
+Zugangsdaten konfigurieren: `MAIL_MAILER=smtp`, `MAIL_HOST`, `MAIL_PORT`,
+`MAIL_USERNAME`, `MAIL_PASSWORD` und eine freigegebene `MAIL_FROM_ADDRESS`.
+`MAIL_SCHEME` passend zum Anbieter setzen. `log` und `array` versenden keine
+E-Mails und werden ausdrücklich als Fehler behandelt, auch als Failover.
+`leads:mail-status` prüft die Konfiguration, nicht die SMTP-Verbindung oder Zustellung.
+
+Der erste Versandversuch erfolgt direkt nach dem Speichern, unabhängig vom
+onOffice-Ergebnis. Beide Zustellungen werden getrennt gespeichert. Für automatische
+Wiederholungen in Plesk eine geplante Aufgabe pro Minute einrichten, die im
+Projektverzeichnis `php artisan schedule:run` mit der passenden PHP-Version ausführt.
+Fehlgeschlagene Zustellungen werden höchstens fünfmal versucht. Bereits erfolgreich
+versandte Nachrichten werden nicht wiederholt. Nach Behebung eines Versandfehlers:
+
+```sh
+php artisan leads:send-mail --lead=123 --retry
+```
+
+123 durch die betroffene Lead-ID ersetzen. Dies wiederholt nur fehlgeschlagene
+E-Mails, nicht die onOffice-Anlage. Nach einem Prozessabbruch kann eine Zustellung
+auf `sending` verbleiben: vor einer manuellen Freigabe den Mailserver prüfen, um
+Doppelversand zu vermeiden. SMTP-Annahme ist keine Garantie für Posteingangszustellung.
+Nach Deployment einen Testlead anlegen und beide Postfächer samt PDF-Anhang prüfen.
+
+Die Oberfläche nutzt lokale Systemschriften, ein zweistufiges Formular und einen
+deutlich sichtbaren Rückrufbereich. Der Calendly-Kalender lädt erst nach Klick
+auf „Kalender laden“; alternativ bleibt der externe Buchungslink verfügbar.

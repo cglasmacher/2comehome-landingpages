@@ -1,74 +1,46 @@
 import { Head, usePage } from '@inertiajs/react';
 import { route } from 'ziggy-js';
-import JourneySteps from '@/Components/LandingPages/JourneySteps';
 import ValuationResult from '@/Components/LandingPages/ValuationResult';
 import { ValuationForm } from '@/Components/ValuationForm';
+import Icon from '@/Components/ui/Icon';
 
 export default function Show() {
-    const { page, valuation, report_url, lead_summary, flash } = usePage().props;
-
+    const { page, valuation, report_url, lead_summary, email_status } = usePage().props;
     return (
         <>
-            <Head title={page.seo?.title ?? page.title}>
-                {page.seo?.description && <meta name="description" content={page.seo.description} />}
-            </Head>
-
-            <div className="min-h-screen bg-(--color-background)">
-                <header className="bg-white shadow-xs">
-                    <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-                        <a href="/" className="flex items-center gap-3">
-                            <img
-                                src="/images/logo-2comehome.png"
-                                alt="2COME HOME Immobilien"
-                                className="h-14 w-auto"
-                            />
-                        </a>
-                        {page.description && (
-                            <p className="hidden text-sm text-(--color-muted) sm:block">
-                                {page.description}
-                            </p>
-                        )}
+            <Head title={page.seo?.title ?? page.title}>{page.seo?.description && <meta name="description" content={page.seo.description} />}</Head>
+            <a className="skip-link" href="#main">Zum Inhalt</a>
+            <div className="site-shell">
+                <header className="site-header">
+                    <div className="site-container header-inner">
+                        <a href={route('landing-pages.show', page.slug)} aria-label="2 COME HOME – zur Landingpage"><img src="/images/logo-2comehome.png" alt="2 COME HOME Immobilien" className="brand-logo" /></a>
+                        <div className="header-caption"><span className="status-dot" /> Immobilien. Persönlich begleitet.</div>
+                        <a className="header-link" href={valuation ? '#rueckruf' : '#bewertung'}>{valuation ? 'Gespräch vereinbaren' : 'Zur Bewertung'} <Icon name="arrow" size={17} /></a>
                     </div>
                 </header>
-
-                <main className="mx-auto max-w-6xl px-4 py-12">
-                    {valuation ? (
-                        <ValuationResult
-                            valuation={valuation}
-                            summary={lead_summary}
-                            reportUrl={report_url}
-                            calendlyUrl={page.calendly_url}
-                            successMessage={flash?.success}
-                        />
-                    ) : (
-                        <div className="grid gap-12 lg:grid-cols-2 lg:items-start">
-                            <section>
-                                <p className="mb-3 text-sm font-semibold uppercase tracking-wide text-primary">
-                                    {page.content?.eyebrow ?? 'Immobilienbewertung'}
-                                </p>
-                                <h1 className="text-4xl font-bold leading-tight text-(--color-secondary) md:text-5xl">
-                                    {page.content?.hero_title ?? 'Erfahren Sie den Wert Ihrer Immobilie'}
-                                </h1>
-                                <p className="mt-4 text-lg text-(--color-muted)">
-                                    {page.content?.hero_text ??
-                                        'In nur wenigen Schritten erhalten Sie eine fundierte, unverbindliche Markteinschätzung.'}
-                                </p>
-
-                                <JourneySteps activeStep={1} />
+                <main id="main" className="site-container page-main">
+                    {valuation ? <ValuationResult valuation={valuation} summary={lead_summary} reportUrl={report_url} calendlyUrl={page.calendly_url} emailStatus={email_status} /> : (
+                        <div className="valuation-layout">
+                            <section className="intro-panel">
+                                <p className="eyebrow"><span className="short-rule" />{page.content?.eyebrow ?? 'Ihre Immobilienbewertung'}</p>
+                                <h1>{page.content?.hero_title ?? 'Was steckt in Ihrer Immobilie?'}</h1>
+                                <p className="intro-copy">{page.content?.hero_text ?? 'Erhalten Sie eine erste Orientierung zum Marktwert Ihrer Immobilie. Wir begleiten Sie bei den nächsten Schritten.'}</p>
+                                <div className="intro-benefits">
+                                    <div><Icon name="file" /><span>Ihre Ersteinschätzung als PDF</span></div>
+                                    <div><Icon name="phone" /><span>Ein persönlicher Ansprechpartner</span></div>
+                                </div>
+                                <div className="process-note">
+                                    <span className="process-number">01—03</span>
+                                    <h2>Ein guter Anfang für Ihre Entscheidung.</h2>
+                                    <ol><li><span>01</span> Immobilie beschreiben</li><li><span>02</span> Ersteinschätzung erhalten</li><li><span>03</span> Gemeinsam die nächsten Schritte besprechen</li></ol>
+                                </div>
+                                <p className="intro-footnote">Unverbindliche Orientierung – keine verbindliche Verkehrswertermittlung.</p>
                             </section>
-
-                            <section className="space-y-8">
-                                <ValuationForm action={route('landing-pages.leads.store', page.slug)} />
-                            </section>
+                            <section id="bewertung" className="form-panel"><ValuationForm action={route('landing-pages.leads.store', page.slug)} /></section>
                         </div>
                     )}
                 </main>
-
-                <footer className="border-t border-(--color-border) bg-white py-8">
-                    <div className="mx-auto max-w-6xl px-4 text-center text-sm text-(--color-muted)">
-                        &copy; {new Date().getFullYear()} {page.title}. Alle Rechte vorbehalten.
-                    </div>
-                </footer>
+                <footer className="site-footer"><div className="site-container footer-inner"><span>© {new Date().getFullYear()} 2 COME HOME Immobilien</span><span>Ihre Immobilie verdient persönliche Aufmerksamkeit.</span></div></footer>
             </div>
         </>
     );

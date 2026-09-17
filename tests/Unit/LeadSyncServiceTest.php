@@ -25,7 +25,7 @@ class LeadSyncServiceTest extends TestCase
             'status' => 'success', 'external_contact_id' => 'contact-7', 'raw' => [],
         ]);
         $client->shouldReceive('createEstate')->once()->withArgs(function (array $property, string $note): bool {
-            return $property['city'] === 'Köln' && $note === 'Landing Page Lead aus bestandsimmobilie';
+            return $property['city'] === 'Köln' && $note === 'Landingpage Lead von bestandsimmobilie';
         })->andReturn([
             'status' => 'success', 'external_estate_id' => 'estate-42', 'raw' => [],
         ]);
