@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreLeadRequest;
-use App\Mail\LeadValuationSummaryMail;
+use App\Services\Mail\LeadMailService;
 use App\Models\LandingPage;
 use App\Models\Lead;
 use App\Models\Valuation;
@@ -12,7 +12,6 @@ use App\Services\PriceHubble\ValuationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 use Throwable;
 
 class LeadSubmissionController extends Controller
@@ -22,10 +21,11 @@ class LeadSubmissionController extends Controller
         LandingPage $landingPage,
         ValuationService $valuationService,
         LeadSyncService $leadSyncService,
+        LeadMailService $leadMailService,
     ): RedirectResponse {
         $data = $request->validated();
 
-        $lead = DB::transaction(function () use ($data, $request, $landingPage, $valuationService) {
+        $lead = DB::transaction(function () use ($data, $request, $landingPage, $valuationService, $leadMailService) {
             $lead = Lead::create([
                 'landing_page_id' => $landingPage->id,
                 'first_name' => $data['first_name'] ?? null,
@@ -60,28 +60,21 @@ class LeadSubmissionController extends Controller
                 'error_message' => $result->errorMessage,
             ]);
 
+            $leadMailService->prepare($lead);
+
             return $lead;
         });
 
         $lead = $lead->fresh(['landingPage', 'property', 'valuation']);
-        $leadSyncService->sync($lead);
-
         try {
-            Mail::to($lead->email)->send(new LeadValuationSummaryMail($lead));
-
-            Log::info('lead valuation summary email sent', [
-                'lead_id' => $lead->id,
-                'recipient' => $lead->email,
-            ]);
+            $leadSyncService->sync($lead);
         } catch (Throwable $e) {
-            report($e);
-
-            Log::error('lead valuation summary email failed', [
-                'lead_id' => $lead->id,
-                'recipient' => $lead->email,
-                'error' => $e->getMessage(),
+            Log::error('lead sync failed before email delivery', [
+                'lead_id' => $lead->id, 'exception_type' => get_class($e),
             ]);
         }
+        // Each recipient has an independent durable delivery record.
+        $leadMailService->sendForLead($lead);
 
         return redirect()
             ->route('landing-pages.results.show', [$landingPage, $lead])

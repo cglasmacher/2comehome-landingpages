@@ -3,6 +3,7 @@
 return [
     'public_domain' => env('LANDINGPAGE_PUBLIC_DOMAIN', 'verkauf.2comehome.de'),
     'default_range_percent' => (float) env('LANDINGPAGE_DEFAULT_RANGE_PERCENT', 7.5),
+    'lead_notification_email' => env('LEAD_NOTIFICATION_EMAIL', 'c.glasmacher@2comehome.de'),
     'calendly_url' => env('CALENDLY_URL'),
 
     'pricehubble' => [
@@ -17,7 +18,7 @@ return [
         'secret' => env('ONOFFICE_SECRET'),
         'timeout' => (int) env('ONOFFICE_TIMEOUT', 20),
         'debug' => env('ONOFFICE_DEBUG', true),
-        'estate_note_field' => env('ONOFFICE_ESTATE_NOTE_FIELD', 'interne_Bemerkung'),
+        'estate_note_field' => env('ONOFFICE_ESTATE_NOTE_FIELD', 'InterneBemerkung'),
         'estate_user_id' => env('ONOFFICE_ESTATE_USER_ID'),
         'estate_user_initials' => env('ONOFFICE_ESTATE_USER_INITIALS', 'CG'),
         'country_codes' => ['DE' => 'DEU', 'AT' => 'AUT', 'CH' => 'CHE'],

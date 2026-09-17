@@ -8,6 +8,14 @@ use Symfony\Component\HttpFoundation\Response;
 
 class ValuationReportPdfService
 {
+    public function bytes(Lead $lead): string
+    {
+        $lead->loadMissing(['landingPage', 'property', 'valuation']);
+        return Pdf::loadView('pdf.valuation-report', [
+            'lead' => $lead, 'property' => $lead->property, 'valuation' => $lead->valuation,
+        ])->setPaper('a4')->output();
+    }
+
     public function stream(Lead $lead): Response
     {
         $lead->loadMissing(['landingPage', 'property', 'valuation']);

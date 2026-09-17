@@ -20,6 +20,7 @@ class OnOfficeClientTest extends TestCase
         config()->set('landingpages.onoffice.debug', false);
         config()->set('landingpages.onoffice.estate_status2_label', 'in akquise');
         config()->set('landingpages.onoffice.estate_user_id', 17);
+        config()->set('landingpages.onoffice.estate_note_field', 'interne_Bemerkung');
         Http::preventStrayRequests();
         Cache::flush();
     }
