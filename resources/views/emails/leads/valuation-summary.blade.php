@@ -66,7 +66,7 @@
                     <tr>
                         <td style="padding:22px 32px; background:#2D2D2D;">
                             <p style="margin:0 0 8px; color:#FFFFFF; font-size:16px; font-weight:bold;">Wie geht es weiter?</p>
-                            <p style="margin:0; color:#E5E7EB; font-size:14px; line-height:1.6;">Wir prüfen Ihre Angaben persönlich und melden uns schnellstmöglich bei Ihnen. Ihren Bewertungsbericht können Sie hier öffnen:</p>
+                            <p style="margin:0; color:#E5E7EB; font-size:14px; line-height:1.6;">Wir prüfen Ihre Angaben persönlich und melden uns schnellstmöglich bei Ihnen. Ihren Bewertungsbericht finden Sie als PDF im Anhang. Sie können ihn auch hier öffnen:</p>
                             <p style="margin:18px 0 0;"><a href="{{ route('valuation-reports.show', $lead) }}" style="display:inline-block; padding:12px 18px; background:#C84C3D; color:#FFFFFF; font-size:14px; font-weight:bold; text-decoration:none;">PDF-Bericht öffnen</a></p>
                         </td>
                     </tr>

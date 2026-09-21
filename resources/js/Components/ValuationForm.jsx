@@ -1,281 +1,102 @@
+import { useRef, useState } from 'react';
 import { useForm } from '@inertiajs/react';
 import ValuationProcessingState from '@/Components/LandingPages/ValuationProcessingState';
-import { Card, CardTitle } from './ui/Card';
+import Icon from './ui/Icon';
 import { Button } from './ui/Button';
-import { Input } from './ui/Input';
-import { Label } from './ui/Label';
 
 const propertyTypes = [
-    { value: 'einfamilienhaus', label: 'Einfamilienhaus' },
-    { value: 'doppelhaushälfte', label: 'Doppelhaushälfte' },
-    { value: 'reihenhaus', label: 'Reihenhaus' },
-    { value: 'wohnung', label: 'Wohnung' },
-    { value: 'maisonette', label: 'Maisonette' },
-    { value: 'grundstück', label: 'Grundstück' },
+    ['einfamilienhaus', 'Einfamilienhaus', 'home'],
+    ['doppelhaushälfte', 'Doppelhaushälfte', 'home'],
+    ['reihenhaus', 'Reihenhaus', 'home'],
+    ['wohnung', 'Wohnung', 'building'],
+    ['maisonette', 'Maisonette', 'building'],
+    ['grundstück', 'Grundstück', 'land'],
+];
+const propertyFields = [
+    ['street', 'Straße', 'text', 'z. B. Gartenstraße', 'address-line1'],
+    ['house_number', 'Hausnummer', 'text', 'z. B. 12', 'address-line2'],
+    ['zip', 'Postleitzahl', 'text', 'z. B. 40721', 'postal-code'],
+    ['city', 'Ort', 'text', 'z. B. Hilden', 'address-level2'],
+    ['living_area', 'Wohnfläche in m²', 'number', 'z. B. 120'],
+    ['plot_area', 'Grundstück in m²', 'number', 'z. B. 450'],
+    ['construction_year', 'Baujahr', 'number', 'z. B. 1995'],
+    ['rooms', 'Zimmer', 'number', 'z. B. 4'],
 ];
 
-function ConsentCheckbox({ id, checked, onChange, error, children }) {
-    const errorId = `${id}-error`;
-
-    return (
-        <div className="flex items-start gap-3">
-            <input
-                id={id}
-                type="checkbox"
-                checked={checked}
-                required
-                aria-invalid={Boolean(error)}
-                aria-describedby={error ? errorId : undefined}
-                onChange={(e) => onChange(e.target.checked)}
-                className="mt-1 h-5 w-5 shrink-0 rounded border-(--color-border) text-primary focus:ring-2 focus:ring-primary/50"
-            />
-            <div className="min-w-0">
-                <Label htmlFor={id} className="mb-0 cursor-pointer text-sm font-normal leading-6">
-                    {children}
-                </Label>
-                {error && (
-                    <p id={errorId} className="mt-1 text-sm text-red-600" role="alert">
-                        {error}
-                    </p>
-                )}
-            </div>
-        </div>
-    );
+function Field({ id, label, error, ...props }) {
+    return <div className="form-field"><label htmlFor={id}>{label}</label><input id={id} className="input" aria-invalid={Boolean(error)} aria-describedby={error ? id + '-error' : undefined} {...props} />{error && <p id={id + '-error'} className="field-error" role="alert">{error}</p>}</div>;
 }
 
 export function ValuationForm({ action, onSuccess }) {
+    const [step, setStep] = useState(0);
+    const heading = useRef(null);
+    const form = useRef(null);
     const { data, setData, post, processing, errors } = useForm({
-        first_name: '',
-        last_name: '',
-        email: '',
-        phone: '',
-        notes: '',
-        phone_contact_consent: false,
-        valuation_disclaimer_accepted: false,
-        property: {
-            property_type: '',
-            street: '',
-            house_number: '',
-            zip: '',
-            city: '',
-            country: 'DE',
-            construction_year: '',
-            living_area: '',
-            plot_area: '',
-            rooms: '',
-        },
+        first_name: '', last_name: '', email: '', phone: '', notes: '',
+        phone_contact_consent: false, valuation_disclaimer_accepted: false,
+        property: { property_type: '', street: '', house_number: '', zip: '', city: '', country: 'DE', construction_year: '', living_area: '', plot_area: '', rooms: '' },
     });
-
-    const handlePropertyChange = (field, value) => {
-        setData('property', { ...data.property, [field]: value });
+    const changeProperty = (key, value) => setData('property', { ...data.property, [key]: value });
+    const changeStep = (value) => {
+        setStep(value);
+        requestAnimationFrame(() => { heading.current?.focus(); heading.current?.scrollIntoView({ block: 'nearest' }); });
     };
-
-    const submit = (e) => {
-        e.preventDefault();
+    const submit = (event) => {
+        event.preventDefault();
+        if (step === 0) { if (form.current.reportValidity()) changeStep(1); return; }
         post(action, {
             preserveScroll: 'errors',
             onSuccess,
+            onError: (validation) => {
+                changeStep(Object.keys(validation).some((key) => key.startsWith('property.')) ? 0 : 1);
+            },
         });
     };
 
-    const inputError = (name) => errors[name] && <p className="mt-1 text-sm text-red-600">{errors[name]}</p>;
-    const propertyError = (name) =>
-        errors[`property.${name}`] && (
-            <p className="mt-1 text-sm text-red-600">{errors[`property.${name}`]}</p>
-        );
-
     return (
-        <Card>
-            <CardTitle>Jetzt Immobilie bewerten lassen</CardTitle>
-            <p className="mb-6 text-sm text-muted">
-                Füllen Sie das Formular aus. Sie erhalten direkt eine erste Einschätzung.
-            </p>
-
-            <form onSubmit={submit} className="space-y-6">
-                <div className="grid gap-4 md:grid-cols-2">
-                    <div>
-                        <Label htmlFor="first_name">Vorname</Label>
-                        <Input
-                            id="first_name"
-                            value={data.first_name}
-                            onChange={(e) => setData('first_name', e.target.value)}
-                        />
-                        {inputError('first_name')}
-                    </div>
-                    <div>
-                        <Label htmlFor="last_name">Nachname</Label>
-                        <Input
-                            id="last_name"
-                            value={data.last_name}
-                            onChange={(e) => setData('last_name', e.target.value)}
-                        />
-                        {inputError('last_name')}
-                    </div>
-                    <div>
-                        <Label htmlFor="email">E-Mail *</Label>
-                        <Input
-                            id="email"
-                            type="email"
-                            required
-                            value={data.email}
-                            onChange={(e) => setData('email', e.target.value)}
-                        />
-                        {inputError('email')}
-                    </div>
-                    <div>
-                        <Label htmlFor="phone">Telefon *</Label>
-                        <Input
-                            id="phone"
-                            type="tel"
-                            required
-                            value={data.phone}
-                            onChange={(e) => setData('phone', e.target.value)}
-                        />
-                        {inputError('phone')}
-                    </div>
-                </div>
-
-                <hr className="border-(--color-border)" />
-
-                <div className="grid gap-4 md:grid-cols-2">
-                    <div className="md:col-span-2">
-                        <Label htmlFor="property_type">Objekttyp</Label>
-                        <select
-                            id="property_type"
-                            className="input"
-                            value={data.property.property_type}
-                            onChange={(e) => handlePropertyChange('property_type', e.target.value)}
-                        >
-                            <option value="">Bitte wählen</option>
-                            {propertyTypes.map((type) => (
-                                <option key={type.value} value={type.value}>
-                                    {type.label}
-                                </option>
-                            ))}
-                        </select>
-                        {propertyError('property_type')}
-                    </div>
-
-                    <div>
-                        <Label htmlFor="street">Straße</Label>
-                        <Input
-                            id="street"
-                            value={data.property.street}
-                            onChange={(e) => handlePropertyChange('street', e.target.value)}
-                        />
-                        {propertyError('street')}
-                    </div>
-                    <div>
-                        <Label htmlFor="house_number">Hausnummer</Label>
-                        <Input
-                            id="house_number"
-                            value={data.property.house_number}
-                            onChange={(e) => handlePropertyChange('house_number', e.target.value)}
-                        />
-                        {propertyError('house_number')}
-                    </div>
-                    <div>
-                        <Label htmlFor="zip">PLZ</Label>
-                        <Input
-                            id="zip"
-                            value={data.property.zip}
-                            onChange={(e) => handlePropertyChange('zip', e.target.value)}
-                        />
-                        {propertyError('zip')}
-                    </div>
-                    <div>
-                        <Label htmlFor="city">Ort</Label>
-                        <Input
-                            id="city"
-                            value={data.property.city}
-                            onChange={(e) => handlePropertyChange('city', e.target.value)}
-                        />
-                        {propertyError('city')}
-                    </div>
-                    <div>
-                        <Label htmlFor="living_area">Wohnfläche (m²)</Label>
-                        <Input
-                            id="living_area"
-                            type="number"
-                            min="1"
-                            value={data.property.living_area}
-                            onChange={(e) => handlePropertyChange('living_area', e.target.value)}
-                        />
-                        {propertyError('living_area')}
-                    </div>
-                    <div>
-                        <Label htmlFor="plot_area">Grundstücksfläche (m²)</Label>
-                        <Input
-                            id="plot_area"
-                            type="number"
-                            min="0"
-                            value={data.property.plot_area}
-                            onChange={(e) => handlePropertyChange('plot_area', e.target.value)}
-                        />
-                        {propertyError('plot_area')}
-                    </div>
-                    <div>
-                        <Label htmlFor="construction_year">Baujahr</Label>
-                        <Input
-                            id="construction_year"
-                            type="number"
-                            min="1700"
-                            value={data.property.construction_year}
-                            onChange={(e) => handlePropertyChange('construction_year', e.target.value)}
-                        />
-                        {propertyError('construction_year')}
-                    </div>
-                    <div>
-                        <Label htmlFor="rooms">Zimmer</Label>
-                        <Input
-                            id="rooms"
-                            type="number"
-                            step="0.5"
-                            min="1"
-                            value={data.property.rooms}
-                            onChange={(e) => handlePropertyChange('rooms', e.target.value)}
-                        />
-                        {propertyError('rooms')}
-                    </div>
-                </div>
-
-                <div>
-                    <Label htmlFor="notes">Notiz / Besonderheiten</Label>
-                    <textarea
-                        id="notes"
-                        rows="3"
-                        className="input"
-                        value={data.notes}
-                        onChange={(e) => setData('notes', e.target.value)}
-                    />
-                    {inputError('notes')}
-                </div>
-
-                <div className="space-y-3">
-                    <ConsentCheckbox
-                        id="phone_contact_consent"
-                        checked={data.phone_contact_consent}
-                        onChange={(value) => setData('phone_contact_consent', value)}
-                        error={errors.phone_contact_consent}
-                    >
-                        Ich bin damit einverstanden, dass 2 COME HOME Immobilien mich telefonisch kontaktiert.
-                    </ConsentCheckbox>
-                    <ConsentCheckbox
-                        id="valuation_disclaimer_accepted"
-                        checked={data.valuation_disclaimer_accepted}
-                        onChange={(value) => setData('valuation_disclaimer_accepted', value)}
-                        error={errors.valuation_disclaimer_accepted}
-                    >
-                        Ich habe verstanden, dass es sich um eine unverbindliche Ersteinschätzung handelt, daraus kein Anspruch auf einen bestimmten Verkaufspreis entsteht und ich die Widerrufsbelehrung sowie die Datenschutzerklärung zur Kenntnis genommen habe.
-                    </ConsentCheckbox>
-                </div>
-
-                <ValuationProcessingState isProcessing={processing} />
-
-                <Button type="submit" isLoading={processing} className="w-full sm:w-auto">
-                    Immobilie bewerten
-                </Button>
+        <div className="valuation-form">
+            <div className="form-progress" aria-label="Fortschritt"><span className={step === 0 ? 'active' : 'complete'} aria-current={step === 0 ? 'step' : undefined}><b>{step > 0 ? '✓' : '1'}</b> Ihre Immobilie</span><i /><span className={step === 1 ? 'active' : ''} aria-current={step === 1 ? 'step' : undefined}><b>2</b> Ihr Kontakt</span></div>
+            <div className="form-heading"><p className="eyebrow">Schritt {step + 1} von 2</p><h2 ref={heading} tabIndex={-1}>{step === 0 ? 'Um welche Immobilie geht es?' : 'Wohin dürfen wir den Bericht senden?'}</h2><p>{step === 0 ? 'Ein paar Angaben helfen uns, Ihre Immobilie einzuordnen.' : 'Sie erhalten Ihre Ersteinschätzung als PDF per E-Mail.'}</p></div>
+            <form ref={form} onSubmit={submit} noValidate={false}>
+                {step === 0 ? (
+                    <>
+                        <fieldset className="property-selector"><legend>Immobilienart</legend><div className="property-options">{propertyTypes.map(([value, label, icon]) => (
+                            <label className={data.property.property_type === value ? 'property-option selected' : 'property-option'} key={value}>
+                                <input type="radio" name="property_type" value={value} checked={data.property.property_type === value} onChange={() => changeProperty('property_type', value)} />
+                                <Icon name={icon} size={25} /><span>{label}</span>
+                            </label>
+                        ))}</div>{errors['property.property_type'] && <p className="field-error" role="alert">{errors['property.property_type']}</p>}</fieldset>
+                        <div className="form-section-title"><Icon name="pin" size={18} /> Adresse & Eckdaten</div>
+                        <div className="field-grid">{propertyFields.map(([key, label, type, placeholder, autoComplete]) => (
+                            <Field key={key} id={key} label={label} type={type} placeholder={placeholder} autoComplete={autoComplete} inputMode={key === 'zip' ? 'numeric' : undefined}
+                                min={type === 'number' ? (key === 'construction_year' ? 1700 : 1) : undefined}
+                                max={key === 'construction_year' ? new Date().getFullYear() : undefined}
+                                step={key === 'rooms' ? '0.5' : undefined}
+                                value={data.property[key]} onChange={(event) => changeProperty(key, event.target.value)} error={errors['property.' + key]} />
+                        ))}</div>
+                    </>
+                ) : (
+                    <>
+                        <div className="contact-context"><Icon name="home" /><span>{propertyTypes.find(([value]) => value === data.property.property_type)?.[1] || 'Ihre Immobilie'}{data.property.city ? ' in ' + data.property.city : ''}</span><button type="button" onClick={() => changeStep(0)}>Ändern</button></div>
+                        <div className="field-grid">
+                            <Field id="first_name" label="Vorname" autoComplete="given-name" value={data.first_name} onChange={(event) => setData('first_name', event.target.value)} error={errors.first_name} />
+                            <Field id="last_name" label="Nachname" autoComplete="family-name" value={data.last_name} onChange={(event) => setData('last_name', event.target.value)} error={errors.last_name} />
+                            <Field id="email" label="E-Mail *" type="email" autoComplete="email" required value={data.email} onChange={(event) => setData('email', event.target.value)} error={errors.email} />
+                            <Field id="phone" label="Telefon *" type="tel" autoComplete="tel" required value={data.phone} onChange={(event) => setData('phone', event.target.value)} error={errors.phone} />
+                        </div>
+                        <div className="form-field notes-field"><label htmlFor="notes">Was sollten wir noch wissen? <span>optional</span></label><textarea id="notes" rows={3} className="input" placeholder="Besonderheiten Ihrer Immobilie oder Fragen an uns …" value={data.notes} onChange={(event) => setData('notes', event.target.value)} aria-invalid={Boolean(errors.notes)} />{errors.notes && <p className="field-error" role="alert">{errors.notes}</p>}</div>
+                        <div className="consent-group">
+                            {[
+                                ['phone_contact_consent', 'Ich bin damit einverstanden, dass 2 COME HOME Immobilien mich telefonisch kontaktiert.'],
+                                ['valuation_disclaimer_accepted', 'Ich habe verstanden, dass es sich um eine unverbindliche Ersteinschätzung handelt, daraus kein Anspruch auf einen bestimmten Verkaufspreis entsteht und ich die Widerrufsbelehrung sowie die Datenschutzerklärung zur Kenntnis genommen habe.'],
+                            ].map(([key, text]) => <div key={key}><label className="consent-row"><input type="checkbox" required checked={data[key]} onChange={(event) => setData(key, event.target.checked)} aria-invalid={Boolean(errors[key])} /><span>{text}</span></label>{errors[key] && <p className="field-error" role="alert">{errors[key]}</p>}</div>)}
+                        </div>
+                        <ValuationProcessingState isProcessing={processing} />
+                    </>
+                )}
+                <div className="form-actions">{step === 1 && <button type="button" className="back-button" disabled={processing} onClick={() => changeStep(0)}>Zurück</button>}<Button type="submit" isLoading={processing} className="continue-button">{step === 0 ? 'Weiter zu Ihren Kontaktdaten' : 'Ersteinschätzung anfordern'}<Icon name="arrow" size={18} /></Button></div>
+                <p className="form-assurance"><Icon name="lock" size={14} /> Ihre Angaben werden vertraulich behandelt.{step === 1 && ' * Pflichtfelder'}</p>
             </form>
-        </Card>
+        </div>
     );
 }
