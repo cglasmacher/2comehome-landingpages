@@ -13,6 +13,8 @@ class OnOfficeClient
 {
     private const ACTION_ID_CREATE = 'urn:onoffice-de-ns:smart:2.5:smartml:action:create';
 
+    private const ACTION_ID_MODIFY = 'urn:onoffice-de-ns:smart:2.5:smartml:action:modify';
+
     private const ACTION_ID_READ = 'urn:onoffice-de-ns:smart:2.5:smartml:action:read';
 
     private const ACTION_ID_GET = 'urn:onoffice-de-ns:smart:2.5:smartml:action:get';
@@ -117,11 +119,21 @@ class OnOfficeClient
         }
 
         $outcome = $this->executeAction(self::RESOURCE_TYPE_ESTATE, ['data' => $data]);
+        $valuationFields = ['status' => 'skipped'];
+        if ($outcome['status'] === 'success') {
+            try {
+                $valuationFields = $this->writeValuationFields($outcome['record_id'], $propertyPayload['valuation'] ?? [], $configuration['fields']);
+            } catch (Throwable $e) {
+                // Preserve the created ID so owner linking can still complete.
+                $valuationFields = $this->valuationWarning($outcome['record_id'], 'Valuation field verification failed ('.class_basename($e).').');
+            }
+        }
 
         return [
             'status' => $outcome['status'],
             'external_estate_id' => $outcome['record_id'],
             'status2_resolution' => $status2Resolution['raw'],
+            'valuation_fields' => $valuationFields,
             'message' => $outcome['message'],
             'raw' => $outcome['raw'],
         ];
@@ -166,7 +178,7 @@ class OnOfficeClient
      * @param  array<string, mixed>  $parameters
      * @return array{status: string, record_id: string|null, raw: array<string, mixed>}
      */
-    private function executeAction(string $resourceType, array $parameters, string $actionId = self::ACTION_ID_CREATE): array
+    private function executeAction(string $resourceType, array $parameters, string $actionId = self::ACTION_ID_CREATE, string $resourceId = ''): array
     {
         $baseUrl = (string) config('landingpages.onoffice.base_url');
         $token = (string) config('landingpages.onoffice.token');
@@ -177,7 +189,7 @@ class OnOfficeClient
 
         $action = [
             'actionid' => $actionId,
-            'resourceid' => '',
+            'resourceid' => $resourceId,
             'resourcetype' => $resourceType,
             'identifier' => $identifier,
             'timestamp' => $timestamp,
@@ -319,6 +331,14 @@ class OnOfficeClient
 
         $noteField = trim((string) config('landingpages.onoffice.estate_note_field', 'interne_Bemerkung'));
         $noteData = $noteField === '' ? [] : [$noteField => $internalNote];
+        $description = trim((string) ($propertyPayload['description'] ?? ''));
+        if ($description !== '') {
+            $descriptionField = trim((string) config('landingpages.onoffice.estate_description_field', 'objektbeschreibung'));
+            if ($descriptionField === '' || $descriptionField === $noteField) {
+                throw new InvalidArgumentException('Description field must be configured separately from the internal note field.');
+            }
+            $noteData[$descriptionField] = $description;
+        }
 
         return array_filter(array_merge($noteData, $types[$type] ?? [], [
             'status' => self::INACTIVE_ESTATE_STATUS,
@@ -449,7 +469,7 @@ class OnOfficeClient
         $expected = array_keys($this->buildEstateParameters([
             'property_type' => 'einfamilienhaus', 'street' => '-', 'house_number' => '-',
             'zip' => '-', 'city' => '-', 'construction_year' => 2000,
-            'living_area' => 1, 'plot_area' => 1, 'rooms' => 1,
+            'living_area' => 1, 'plot_area' => 1, 'rooms' => 1, 'description' => '-',
         ], '-', '-', 1));
         $noteField = trim((string) config('landingpages.onoffice.estate_note_field', 'interne_Bemerkung'));
         $unknown = array_values(array_diff($expected, array_keys($configuration['fields']), [$noteField]));
@@ -467,7 +487,84 @@ class OnOfficeClient
             'note_field' => $noteField,
             'note_field_available' => $noteField !== '' && isset($configuration['fields'][$noteField]),
             'note_field_candidates' => $candidates,
+            'valuation_fields' => $this->valuationFieldConfiguration($configuration['fields']),
+            'price_field_candidates' => array_filter($configuration['fields'], static fn ($field, $name) =>
+                Str::contains(Str::lower($name.' '.($field['label'] ?? '')), ['pricehubble', 'price hubble', 'schätz', 'schaetz', 'marktwert']), ARRAY_FILTER_USE_BOTH),
+            'valuation_write_access' => 'Not tested by read-only diagnosis. Configured fields are verified after writing a new estate.',
         ];
+    }
+
+    private function valuationFieldConfiguration(array $fields): array
+    {
+        $result = [];
+        $configured = config('landingpages.onoffice.estate_valuation_fields', []);
+        foreach (['estimated_value', 'range_low', 'range_high'] as $key) {
+            $name = trim((string) ($configured[$key] ?? ''));
+            $definition = $fields[$name] ?? [];
+            $result[$key] = [
+                'field' => $name ?: null,
+                'available' => $name !== '' && isset($fields[$name]),
+                'type' => $definition['type'] ?? null,
+            ];
+        }
+
+        return $result;
+    }
+
+    /** Optional numeric fields must never prevent estate creation or cause a second create. */
+    private function writeValuationFields(string $estateId, array $valuation, array $fields): array
+    {
+        $data = [];
+        $issues = [];
+        foreach ($this->valuationFieldConfiguration($fields) as $key => $mapping) {
+            $name = $mapping['field'];
+            if ($name === null || ! isset($valuation[$key])) {
+                continue;
+            }
+            $value = $valuation[$key];
+            if (! $mapping['available'] || ! in_array($mapping['type'], ['float', 'decimal', 'integer', 'int', 'double'], true)
+                || isset($data[$name]) || in_array($name, ['status', 'benutzer', 'Id', 'kaufpreis', 'wohnflaeche', 'baujahr', 'anzahl_zimmer', 'grundstuecksflaeche'], true)
+                || ! is_numeric($value) || ! is_finite((float) $value) || (float) $value <= 0) {
+                $issues[] = 'Invalid or unavailable valuation field: '.$name;
+                continue;
+            }
+            $data[$name] = round((float) $value, 2);
+        }
+        // Do not partially apply an invalid mapping.
+        if ($issues !== []) {
+            return $this->valuationWarning($estateId, implode('; ', $issues));
+        }
+        if ($data === []) {
+            return ['status' => 'skipped', 'message' => 'No numeric valuation fields configured or no valid valuation. Estimate retained in description.'];
+        }
+        $write = $this->executeAction(self::RESOURCE_TYPE_ESTATE, ['data' => $data], self::ACTION_ID_MODIFY, $estateId);
+        if ($write['status'] !== 'success') {
+            return $this->valuationWarning($estateId, $write['message']);
+        }
+        $read = $this->executeAction(self::RESOURCE_TYPE_ESTATE, [
+            'data' => array_keys($data), 'formatoutput' => false,
+        ], self::ACTION_ID_READ, $estateId);
+        $record = collect(data_get($read, 'raw.response.results.0.data.records', []))
+            ->first(fn ($record) => (string) ($record['id'] ?? '') === $estateId);
+        foreach ($data as $name => $value) {
+            $actual = $record['elements'][$name] ?? null;
+            if ($read['status'] !== 'success' || ! is_numeric($actual) || abs((float) $actual - $value) > 0.011) {
+                return $this->valuationWarning($estateId, 'Could not verify stored valuation field: '.$name);
+            }
+        }
+
+        Log::info('onOffice valuation fields verified', ['external_estate_id' => $estateId, 'fields' => array_keys($data)]);
+
+        return ['status' => 'success', 'fields' => array_keys($data)];
+    }
+
+    private function valuationWarning(string $estateId, string $message): array
+    {
+        Log::warning('onOffice valuation fields not confirmed', [
+            'external_estate_id' => $estateId, 'message' => $message,
+        ]);
+
+        return ['status' => 'warning', 'message' => $message];
     }
 
     /** Read-only: no contacts, estates or relations are created. */
