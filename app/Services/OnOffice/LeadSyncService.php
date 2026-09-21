@@ -98,7 +98,59 @@ class LeadSyncService
             'living_area' => $property?->living_area,
             'plot_area' => $property?->plot_area,
             'rooms' => $property?->rooms,
+            'description' => $this->buildEstateDescription($lead),
+            'valuation' => $this->isDemoValuation($lead) ? [] : $this->estateValuation($lead),
         ], static fn ($value) => $value !== null && $value !== '');
+    }
+
+    private function estateValuation(Lead $lead): array
+    {
+        $valuation = $lead->valuation;
+        if ($valuation?->status !== 'completed') {
+            return [];
+        }
+        $values = [];
+        foreach (['estimated_value', 'range_low', 'range_high'] as $key) {
+            $value = $valuation->$key;
+            if (is_numeric($value) && is_finite((float) $value) && (float) $value > 0) {
+                $values[$key] = round((float) $value, 2);
+            }
+        }
+        if (isset($values['range_low'], $values['range_high']) && $values['range_low'] > $values['range_high']) {
+            return [];
+        }
+
+        return $values;
+    }
+
+    private function isDemoValuation(Lead $lead): bool
+    {
+        return data_get($lead->valuation?->provider_response, 'confidence') === 'demo'
+            || data_get($lead->valuation?->provider_response, 'provider') === 'fake_pricehubble_until_credentials_arrive';
+    }
+
+    private function buildEstateDescription(Lead $lead): string
+    {
+        $parts = [];
+        $notes = trim((string) $lead->notes);
+        if ($notes !== '') {
+            // onOffice descriptions can be rendered as HTML. Treat visitor input as text.
+            $parts[] = "Nachricht des Interessenten:\n".htmlspecialchars($notes, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        }
+        $valuation = $this->estateValuation($lead);
+        if ($valuation !== []) {
+            $demo = $this->isDemoValuation($lead);
+            $lines = [$demo ? 'Demo-Schätzung der Landingpage (keine echte PriceHubble-Bewertung):' : 'Automatisierte Verkaufspreisschätzung der Landingpage:'];
+            foreach (['estimated_value' => 'Schätzwert', 'range_low' => 'Minimum', 'range_high' => 'Maximum'] as $key => $label) {
+                if (isset($valuation[$key])) {
+                    $lines[] = $label.': '.number_format($valuation[$key], 2, ',', '.').' EUR';
+                }
+            }
+            $lines[] = 'Unverbindliche Ersteinschätzung; kein festgelegter Angebotspreis.';
+            $parts[] = implode("\n", $lines);
+        }
+
+        return implode("\n\n", $parts);
     }
 
     private function buildRemark(Lead $lead): string

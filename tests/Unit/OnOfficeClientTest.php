@@ -304,6 +304,78 @@ class OnOfficeClientTest extends TestCase
         Http::assertSent(fn ($request) => data_get($request->data(), 'request.actions.0.parameters.data.private_note') === 'Internal source');
     }
 
+    public function test_description_and_prices_are_kept_when_numeric_fields_are_not_configured(): void
+    {
+        Http::fake(['*' => Http::sequence()
+            ->push($this->fieldConfigurationResponse(['in_akquise' => 'In Akquise']))
+            ->push($this->successResponse('42'))]);
+        $description = "Nachricht des Interessenten:\nBitte anrufen.\n\nMinimum: 450.000,00 EUR";
+        $result = app(OnOfficeClient::class)->createEstate([
+            'description' => $description, 'valuation' => ['range_low' => 450000],
+        ], 'Landingpage Lead von test');
+        $this->assertSame('success', $result['status']);
+        $this->assertSame('skipped', $result['valuation_fields']['status']);
+        Http::assertSent(fn ($request) => data_get($request->data(), 'request.actions.0.parameters.data.objektbeschreibung') === $description
+            && data_get($request->data(), 'request.actions.0.parameters.data.interne_Bemerkung') === 'Landingpage Lead von test');
+        Http::assertSentCount(2);
+    }
+
+    public function test_price_fields_are_written_separately_and_read_back(): void
+    {
+        config()->set('landingpages.onoffice.estate_valuation_fields', ['range_low' => 'custom_min', 'range_high' => 'custom_max']);
+        $fields = $this->fieldConfigurationResponse(['in_akquise' => 'In Akquise']);
+        $elements = &$fields['response']['results'][0]['data']['records'][0]['elements'];
+        $elements['custom_min'] = $elements['custom_max'] = ['type' => 'float'];
+        $read = $this->successResponse('42');
+        $read['response']['results'][0]['data']['records'][0]['elements'] = ['custom_min' => '450000.25', 'custom_max' => '550000.75'];
+        Http::fake(['*' => Http::sequence()->push($fields)->push($this->successResponse('42'))
+            ->push($this->successResponse())->push($read)]);
+        $result = app(OnOfficeClient::class)->createEstate(['valuation' => ['range_low' => 450000.25, 'range_high' => 550000.75]], 'Source');
+        $this->assertSame('success', $result['valuation_fields']['status']);
+        Http::assertSent(fn ($request) => data_get($request->data(), 'request.actions.0.actionid') === 'urn:onoffice-de-ns:smart:2.5:smartml:action:modify'
+            && data_get($request->data(), 'request.actions.0.resourceid') === '42'
+            && data_get($request->data(), 'request.actions.0.parameters.data') === ['custom_min' => 450000.25, 'custom_max' => 550000.75]);
+        Http::assertSentCount(4);
+    }
+
+    public function test_rejected_price_field_does_not_lose_the_created_estate(): void
+    {
+        config()->set('landingpages.onoffice.estate_valuation_fields', ['range_low' => 'custom_min']);
+        $fields = $this->fieldConfigurationResponse(['in_akquise' => 'In Akquise']);
+        $fields['response']['results'][0]['data']['records'][0]['elements']['custom_min'] = ['type' => 'float'];
+        Http::fake(['*' => Http::sequence()->push($fields)->push($this->successResponse('42'))
+            ->push(['status' => ['errorcode' => 143, 'message' => 'Read only']])]);
+        $result = app(OnOfficeClient::class)->createEstate(['valuation' => ['range_low' => 450000]], 'Source');
+        $this->assertSame('success', $result['status']);
+        $this->assertSame('42', $result['external_estate_id']);
+        $this->assertSame('warning', $result['valuation_fields']['status']);
+        Http::assertSentCount(3);
+    }
+
+    public function test_ignored_price_write_is_reported_as_unverified(): void
+    {
+        config()->set('landingpages.onoffice.estate_valuation_fields', ['range_low' => 'custom_min']);
+        $fields = $this->fieldConfigurationResponse(['in_akquise' => 'In Akquise']);
+        $fields['response']['results'][0]['data']['records'][0]['elements']['custom_min'] = ['type' => 'float'];
+        Http::fake(['*' => Http::sequence()->push($fields)->push($this->successResponse('42'))
+            ->push($this->successResponse())->push($this->successResponse('42'))]);
+        $result = app(OnOfficeClient::class)->createEstate(['valuation' => ['range_low' => 450000]], 'Source');
+        $this->assertSame('success', $result['status']);
+        $this->assertSame('warning', $result['valuation_fields']['status']);
+        Http::assertSentCount(4);
+    }
+
+    public function test_unknown_price_fields_are_not_sent(): void
+    {
+        config()->set('landingpages.onoffice.estate_valuation_fields', ['range_low' => 'missing']);
+        Http::fake(['*' => Http::sequence()->push($this->fieldConfigurationResponse(['in_akquise' => 'In Akquise']))
+            ->push($this->successResponse('42'))]);
+        $result = app(OnOfficeClient::class)->createEstate(['valuation' => ['range_low' => 450000]], 'Source');
+        $this->assertSame('success', $result['status']);
+        $this->assertSame('warning', $result['valuation_fields']['status']);
+        Http::assertSentCount(2);
+    }
+
     /** @param array<string, string> $permittedValues */
     private function fieldConfigurationResponse(array $permittedValues): array
     {
@@ -317,7 +389,7 @@ class OnOfficeClientTest extends TestCase
                             'elements' => array_merge(array_fill_keys([
                                 'objektart', 'objekttyp', 'status', 'benutzer', 'nutzungsart', 'vermarktungsart',
                                 'strasse', 'hausnummer', 'plz', 'ort', 'land', 'baujahr', 'wohnflaeche',
-                                'grundstuecksflaeche', 'anzahl_zimmer', 'interne_Bemerkung',
+                                'grundstuecksflaeche', 'anzahl_zimmer', 'interne_Bemerkung', 'objektbeschreibung',
                             ], ['type' => 'freetext']), [
                                 'status2' => [
                                     'type' => 'singleselect',

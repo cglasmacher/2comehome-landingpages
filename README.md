@@ -172,3 +172,31 @@ Nach Deployment einen Testlead anlegen und beide Postfächer samt PDF-Anhang pr�
 Die Oberfläche nutzt lokale Systemschriften, ein zweistufiges Formular und einen
 deutlich sichtbaren Rückrufbereich. Der Calendly-Kalender lädt erst nach Klick
 auf „Kalender laden“; alternativ bleibt der externe Buchungslink verfügbar.
+
+### onOffice: Nachricht und Verkaufspreisschätzung
+
+Neue Leads übertragen die Formularnachricht in `objektbeschreibung`. Enthalten sind außerdem der gespeicherte Schätzwert sowie Minimum und Maximum in EUR, klar als unverbindliche Ersteinschätzung gekennzeichnet. Die interne Bemerkung bleibt `Landingpage Lead von <slug>`. Ein anderer Beschreibungsfeldname lässt sich über `ONOFFICE_ESTATE_DESCRIPTION_FIELD` konfigurieren; unbekannte Felder werden vor der Anlage gemeldet. Bereits angelegte Immobilien werden nicht nachträglich verändert.
+
+Die Spanne entspricht `valuations.range_low` / `range_high` (derzeit aus Schätzwert und Landingpage-Prozentsatz berechnet), nicht automatisch einer vom PriceHubble-Anbieter gelieferten Konfidenzspanne. Fehlgeschlagene oder ungültige Bewertungen erzeugen keine Nullpreise. Demo-Schätzungen werden ausdrücklich als solche bezeichnet und nicht in numerische Bewertungsfelder geschrieben.
+
+Nach Übernahme des Pull Requests und Deployment:
+
+```bash
+php artisan config:cache
+php artisan onoffice:diagnose
+```
+
+Keine neue Migration und kein Frontend-Build erforderlich. Die Diagnose schreibt keine onOffice-Datensätze. Unter `estate_fields.price_field_candidates` erscheinen die verfügbaren PriceHubble-/Bewertungsfelder mit ihren exakten API-Namen und Typen. Sie beweist keine Schreibberechtigung. Nach Prüfung der passenden Felder lassen sich diese optional in `.env` zuordnen:
+
+```dotenv
+# Platzhalter durch die tatsächlichen API-Feldnamen aus der Diagnose ersetzen:
+ONOFFICE_ESTATE_VALUE_FIELD=<Feld für den Schätzwert>
+ONOFFICE_ESTATE_MIN_FIELD=<Feld für das Minimum>
+ONOFFICE_ESTATE_MAX_FIELD=<Feld für das Maximum>
+```
+
+Nicht benötigte Zuordnungen weglassen. Anschließend erneut `php artisan config:cache` ausführen. Ohne Zuordnung stehen die Preise bereits in der Beschreibung. `kaufpreis` wird nicht mit einem automatischen Schätzwert belegt.
+
+Konfigurierte numerische Bewertungsfelder werden nach erfolgreicher Anlage über `modify estate` geschrieben und über `read estate` zurückgelesen. Erst bei übereinstimmenden Werten wird `onOffice valuation fields verified` protokolliert. Fehlende Felder, abgelehnte Schreibzugriffe oder nicht bestätigte Werte ergeben `onOffice valuation fields not confirmed` und `estate.valuation_fields.status=warning` im Sync-Protokoll. Die Immobilien-ID und Eigentümer-Verknüpfung bleiben dabei erhalten; es gibt keinen automatischen Wiederholungsversuch der Immobilienanlage. Ein API-Benutzer benötigt für die Zusatzfelder Änderungs- und Leserechte auf der Immobilie.
+
+API-Grundlagen: [Anlegen](https://apidoc.onoffice.de/actions/datensatz-anlegen/objekte/), [Feldkonfiguration](https://apidoc.onoffice.de/actions/informationen-abfragen/feldkonfiguration/), [Ändern](https://apidoc.onoffice.de/actions/datensatz-bearbeiten/objekte/) und [Lesen](https://apidoc.onoffice.de/actions/datensatz-lesen/objekte/).

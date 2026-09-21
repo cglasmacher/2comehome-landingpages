@@ -19,6 +19,13 @@ return [
         'timeout' => (int) env('ONOFFICE_TIMEOUT', 20),
         'debug' => env('ONOFFICE_DEBUG', true),
         'estate_note_field' => env('ONOFFICE_ESTATE_NOTE_FIELD', 'InterneBemerkung'),
+        'estate_description_field' => env('ONOFFICE_ESTATE_DESCRIPTION_FIELD', 'objektbeschreibung'),
+        // Exact API names from onoffice:diagnose; optional, never infer write access from labels.
+        'estate_valuation_fields' => [
+            'estimated_value' => env('ONOFFICE_ESTATE_VALUE_FIELD'),
+            'range_low' => env('ONOFFICE_ESTATE_MIN_FIELD'),
+            'range_high' => env('ONOFFICE_ESTATE_MAX_FIELD'),
+        ],
         'estate_user_id' => env('ONOFFICE_ESTATE_USER_ID'),
         'estate_user_initials' => env('ONOFFICE_ESTATE_USER_INITIALS', 'CG'),
         'country_codes' => ['DE' => 'DEU', 'AT' => 'AUT', 'CH' => 'CHE'],

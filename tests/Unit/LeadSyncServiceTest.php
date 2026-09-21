@@ -20,12 +20,23 @@ class LeadSyncServiceTest extends TestCase
     public function test_it_creates_the_contact_estate_and_owner_relation_in_order(): void
     {
         $lead = $this->makeLead();
+        $lead->update(['notes' => "Bitte abends anrufen.\n<script>alert(1)</script>"]);
+        $lead->valuation()->create([
+            'estimated_value' => 500000, 'range_low' => 450000, 'range_high' => 550000,
+            'range_percent' => 10, 'status' => 'completed',
+        ]);
         $client = Mockery::mock(OnOfficeClient::class);
         $client->shouldReceive('createContactWithRemark')->once()->andReturn([
             'status' => 'success', 'external_contact_id' => 'contact-7', 'raw' => [],
         ]);
         $client->shouldReceive('createEstate')->once()->withArgs(function (array $property, string $note): bool {
-            return $property['city'] === 'Köln' && $note === 'Landingpage Lead von bestandsimmobilie';
+            return $property['city'] === 'Köln' && $note === 'Landingpage Lead von bestandsimmobilie'
+                && str_contains($property['description'], 'Bitte abends anrufen.')
+                && str_contains($property['description'], '&lt;script&gt;')
+                && ! str_contains($property['description'], '<script>')
+                && str_contains($property['description'], 'Minimum: 450.000,00 EUR')
+                && str_contains($property['description'], 'Maximum: 550.000,00 EUR')
+                && $property['valuation'] === ['estimated_value' => 500000.0, 'range_low' => 450000.0, 'range_high' => 550000.0];
         })->andReturn([
             'status' => 'success', 'external_estate_id' => 'estate-42', 'raw' => [],
         ]);
@@ -59,6 +70,33 @@ class LeadSyncServiceTest extends TestCase
         $this->assertSame('partial', $log->status);
         $this->assertSame('Estate rejected', $log->error_message);
         $this->assertNull($log->external_estate_id);
+    }
+
+    public function test_failed_valuation_keeps_message_without_sending_zero_prices(): void
+    {
+        $lead = $this->makeLead();
+        $lead->update(['notes' => 'Bitte melden.']);
+        $lead->valuation()->create(['range_percent' => 10, 'status' => 'failed', 'estimated_value' => 500000]);
+        $lead->load('valuation');
+        $service = new LeadSyncService(app(OnOfficeClient::class));
+        $method = new \ReflectionMethod($service, 'buildPropertyPayload');
+        $payload = $method->invoke($service, $lead);
+        $this->assertSame([], $payload['valuation']);
+        $this->assertSame("Nachricht des Interessenten:\nBitte melden.", $payload['description']);
+    }
+
+    public function test_demo_values_are_labelled_and_not_sent_to_numeric_pricehubble_fields(): void
+    {
+        $lead = $this->makeLead();
+        $lead->valuation()->create([
+            'range_percent' => 10, 'status' => 'completed', 'estimated_value' => 500000,
+            'provider_response' => ['confidence' => 'demo'],
+        ]);
+        $lead->load('valuation');
+        $service = new LeadSyncService(app(OnOfficeClient::class));
+        $payload = (new \ReflectionMethod($service, 'buildPropertyPayload'))->invoke($service, $lead);
+        $this->assertSame([], $payload['valuation']);
+        $this->assertStringContainsString('Demo-Schätzung', $payload['description']);
     }
 
     private function makeLead(): Lead
