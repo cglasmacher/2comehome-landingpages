@@ -240,7 +240,9 @@ class LeadSyncService
             'provider' => 'onoffice',
             'status' => $status,
             'external_contact_id' => $contactId,
+            'onoffice_kdnr' => data_get($contactResponse, 'onoffice_kdnr'),
             'external_estate_id' => $estateId,
+            'onoffice_immonr' => data_get($estateResponse, 'onoffice_immonr'),
             'request_payload' => $requestPayload,
             'response_payload' => [
                 'contact' => $contactResponse,
