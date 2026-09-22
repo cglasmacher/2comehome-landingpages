@@ -133,8 +133,8 @@ export default function LeadEdit({ lead }) {
                             <div>
                                 <span className="block text-[11px] text-[#8a8d85]">onOffice</span>
                                 <span className="mt-1 block leading-6">
-                                    Kontakt-ID: <strong className="font-semibold text-[#172741]">{lead.onoffice?.contact_id || '—'}</strong><br />
-                                    Immobilien-ID: <strong className="font-semibold text-[#172741]">{lead.onoffice?.estate_id || '—'}</strong>
+                                    KdNr: <strong className="font-semibold text-[#172741]">{lead.onoffice?.kdnr || '—'}</strong><br />
+                                    ImmoNr: <strong className="font-semibold text-[#172741]">{lead.onoffice?.immonr || '—'}</strong>
                                 </span>
                                 {lead.onoffice?.synced_at && <span className="mt-1 block text-[11px] text-[#9a9c95]">Letzter Sync: {lead.onoffice.synced_at}</span>}
                             </div>
