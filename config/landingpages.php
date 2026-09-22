@@ -66,6 +66,8 @@ return [
         ],
         'estate_user_id' => env('ONOFFICE_ESTATE_USER_ID'),
         'estate_user_initials' => env('ONOFFICE_ESTATE_USER_INITIALS', 'CG'),
+        'address_owner_contact_type_label' => env('ONOFFICE_ADDRESS_OWNER_TYPE_LABEL', 'Eigentümer'),
+        'address_owner_contact_type_key' => env('ONOFFICE_ADDRESS_OWNER_TYPE_KEY'),
         'country_codes' => ['DE' => 'DEU', 'AT' => 'AUT', 'CH' => 'CHE'],
         'estate_status2_label' => env('ONOFFICE_ESTATE_STATUS2_LABEL', 'in akquise'),
         'estate_status2_cache_ttl' => (int) env('ONOFFICE_ESTATE_STATUS2_CACHE_TTL', 86400),
