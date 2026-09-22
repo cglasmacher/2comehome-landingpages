@@ -35,6 +35,7 @@ class LeadValuationViewData
                 ],
                 'property' => [
                     'property_type' => $lead->property?->property_type,
+                    'property_type_label' => $lead->property?->property_type_label,
                     'street' => $lead->property?->street,
                     'house_number' => $lead->property?->house_number,
                     'zip' => $lead->property?->zip,
