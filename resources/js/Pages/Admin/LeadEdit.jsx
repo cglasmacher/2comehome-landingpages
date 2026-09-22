@@ -113,6 +113,14 @@ export default function LeadEdit({ lead }) {
                         <p className="text-[10px] font-semibold uppercase tracking-[.15em] text-[#8b8d86]">Lead & Objekt</p>
                         <div className="mt-5 space-y-4 text-sm">
                             <div><span className="block text-[11px] text-[#8a8d85]">Kontakt</span><span className="mt-1 block">{lead.email || '—'}<br />{lead.phone || '—'}</span></div>
+                            <div>
+                                <span className="block text-[11px] text-[#8a8d85]">onOffice</span>
+                                <span className="mt-1 block leading-6">
+                                    Kontakt-ID: <strong className="font-semibold text-[#172741]">{lead.onoffice?.contact_id || '—'}</strong><br />
+                                    Immobilien-ID: <strong className="font-semibold text-[#172741]">{lead.onoffice?.estate_id || '—'}</strong>
+                                </span>
+                                {lead.onoffice?.synced_at && <span className="mt-1 block text-[11px] text-[#9a9c95]">Letzter Sync: {lead.onoffice.synced_at}</span>}
+                            </div>
                             <div><span className="block text-[11px] text-[#8a8d85]">Objekt</span><span className="mt-1 block">{lead.property?.property_type_label || '—'}<br />{address || '—'}</span></div>
                             <div><span className="block text-[11px] text-[#8a8d85]">Eckdaten</span><span className="mt-1 block">Wohnfläche: {lead.property?.living_area || '—'} m²<br />Grundstück: {lead.property?.plot_area || '—'} m²<br />Baujahr: {lead.property?.construction_year || '—'} · Zimmer: {lead.property?.rooms || '—'}</span></div>
                             {lead.notes && <div><span className="block text-[11px] text-[#8a8d85]">Notiz</span><span className="mt-1 block whitespace-pre-wrap leading-6">{lead.notes}</span></div>}
