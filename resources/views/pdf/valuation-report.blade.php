@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
     <meta charset="utf-8">
-    <title>Immobilienbewertung - 2 COME HOME</title>
+    <title>{{ $isFinalReport ? 'Abschließende Wertermittlung' : 'Immobilien-Ersteinschätzung' }} - 2 COME HOME</title>
     <style>
         @page { margin: 22mm 18mm 24mm 18mm; }
 
@@ -176,7 +176,7 @@
 
     <div class="header">
         <img src="{{ public_path('images/logo-2comehome.png') }}" alt="2 COME HOME Immobilien" class="logo">
-        <h1>Immobilien-Ersteinschätzung</h1>
+        <h1>{{ $isFinalReport ? 'Abschließende Wertermittlung' : 'Immobilien-Ersteinschätzung' }}</h1>
         <div class="accent-line"></div>
     </div>
 
@@ -229,7 +229,7 @@
     </table>
 
     <div class="valuation">
-        <h2>Ersteinschätzung</h2>
+        <h2>{{ $isFinalReport ? 'Wertermittlung' : 'Ersteinschätzung' }}</h2>
 
         @if($valuation?->range_low && $valuation?->range_high)
             @if($valuation?->estimated_value)
@@ -237,7 +237,7 @@
                     {{ number_format((float) $valuation->estimated_value, 0, ',', '.') }} €
                 </div>
                 <p class="valuation-range">
-                    Orientierungswert
+                    {{ $isFinalReport ? 'Ermittelter Immobilienwert' : 'Orientierungswert' }}
                 </p>
             @endif
 
@@ -274,17 +274,31 @@
 
         <h2>Hinweis zur Bewertung</h2>
         <p class="notice">
-            Diese Immobilien-Ersteinschätzung wurde automatisiert auf Grundlage der von Ihnen übermittelten
-            Objektdaten erstellt. Sie dient als erste Orientierung und stellt weder ein Verkehrswertgutachten
-            noch eine verbindliche Kaufpreis- oder Verkaufspreisempfehlung dar. Für eine belastbare Einwertung
-            berücksichtigen wir zusätzlich insbesondere Mikrolage, Zustand, Ausstattungsqualität,
-            Modernisierungen, rechtliche Besonderheiten und die aktuelle Marktsituation.
+            @if($isFinalReport)
+                Diese abschließende Wertermittlung basiert auf den im persönlichen Austausch konkretisierten
+                Objektdaten sowie der anschließenden fachlichen Einwertung durch 2 COME HOME Immobilien.
+                Berücksichtigt wurden insbesondere Lage, Zustand, Ausstattungsqualität, Modernisierungen,
+                objektspezifische Besonderheiten und die aktuelle Marktsituation. Die Wertermittlung stellt
+                kein Verkehrswertgutachten im Sinne einer förmlichen Gutachtenerstellung dar.
+            @else
+                Diese Immobilien-Ersteinschätzung wurde automatisiert auf Grundlage der von Ihnen übermittelten
+                Objektdaten erstellt. Sie dient als erste Orientierung und stellt weder ein Verkehrswertgutachten
+                noch eine verbindliche Kaufpreis- oder Verkaufspreisempfehlung dar. Für eine belastbare Einwertung
+                berücksichtigen wir zusätzlich insbesondere Mikrolage, Zustand, Ausstattungsqualität,
+                Modernisierungen, rechtliche Besonderheiten und die aktuelle Marktsituation.
+            @endif
         </p>
     @else
         <p class="notice">
-            Diese Immobilien-Ersteinschätzung wurde automatisiert auf Grundlage der von Ihnen übermittelten
-            Objektdaten erstellt. Sie dient als erste Orientierung und stellt weder ein Verkehrswertgutachten
-            noch eine verbindliche Kaufpreis- oder Verkaufspreisempfehlung dar.
+            @if($isFinalReport)
+                Diese abschließende Wertermittlung basiert auf den im persönlichen Austausch konkretisierten
+                Objektdaten sowie der anschließenden fachlichen Einwertung durch 2 COME HOME Immobilien.
+                Sie stellt kein Verkehrswertgutachten im Sinne einer förmlichen Gutachtenerstellung dar.
+            @else
+                Diese Immobilien-Ersteinschätzung wurde automatisiert auf Grundlage der von Ihnen übermittelten
+                Objektdaten erstellt. Sie dient als erste Orientierung und stellt weder ein Verkehrswertgutachten
+                noch eine verbindliche Kaufpreis- oder Verkaufspreisempfehlung dar.
+            @endif
         </p>
     @endif
 </body>
