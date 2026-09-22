@@ -10,26 +10,31 @@ return [
         'einfamilienhaus' => [
             'label' => 'Einfamilienhaus',
             'icon' => 'home',
+            'somantic' => 'haus',
             'onoffice' => ['objektart' => 'haus', 'objekttyp' => 'einfamilienhaus'],
         ],
         'doppelhaushälfte' => [
             'label' => 'Doppelhaushälfte',
             'icon' => 'home',
+            'somantic' => 'haus',
             'onoffice' => ['objektart' => 'haus', 'objekttyp' => 'doppelhaushaelfte'],
         ],
         'reihenhaus' => [
             'label' => 'Reihenhaus',
             'icon' => 'home',
+            'somantic' => 'haus',
             'onoffice' => ['objektart' => 'haus', 'objekttyp' => 'reihenhaus'],
         ],
         'wohnung' => [
             'label' => 'Wohnung',
             'icon' => 'building',
+            'somantic' => 'wohnung',
             'onoffice' => ['objektart' => 'wohnung'],
         ],
         'maisonette' => [
             'label' => 'Maisonette',
             'icon' => 'building',
+            'somantic' => 'wohnung',
             'onoffice' => ['objektart' => 'wohnung', 'objekttyp' => 'maisonette'],
         ],
         'grundstück' => [
