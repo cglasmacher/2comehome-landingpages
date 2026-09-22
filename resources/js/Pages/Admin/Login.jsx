@@ -1,4 +1,5 @@
 import { Head, useForm } from '@inertiajs/react';
+import { route } from 'ziggy-js';
 
 export default function Login() {
     const { data, setData, post, processing, errors } = useForm({
