@@ -26,6 +26,7 @@ class LeadSyncServiceTest extends TestCase
             'range_percent' => 10, 'status' => 'completed',
         ]);
         $client = Mockery::mock(OnOfficeClient::class);
+        $client->shouldReceive('findLatestContactByEmail')->once()->with('ada@example.test')->andReturn(['status' => 'success', 'external_contact_id' => null, 'contact_types' => [], 'matches' => [], 'raw' => []]);
         $client->shouldReceive('createContactWithRemark')->once()->andReturn([
             'status' => 'success', 'external_contact_id' => 'contact-7', 'raw' => [],
         ]);
@@ -56,6 +57,7 @@ class LeadSyncServiceTest extends TestCase
     {
         $lead = $this->makeLead();
         $client = Mockery::mock(OnOfficeClient::class);
+        $client->shouldReceive('findLatestContactByEmail')->once()->with('ada@example.test')->andReturn(['status' => 'success', 'external_contact_id' => null, 'contact_types' => [], 'matches' => [], 'raw' => []]);
         $client->shouldReceive('createContactWithRemark')->once()->andReturn([
             'status' => 'success', 'external_contact_id' => 'contact-7', 'raw' => [],
         ]);
@@ -70,6 +72,31 @@ class LeadSyncServiceTest extends TestCase
         $this->assertSame('partial', $log->status);
         $this->assertSame('Estate rejected', $log->error_message);
         $this->assertNull($log->external_estate_id);
+    }
+
+    public function test_it_reuses_the_highest_existing_contact_and_adds_status_warning(): void
+    {
+        $lead = $this->makeLead();
+        $client = Mockery::mock(OnOfficeClient::class);
+        $client->shouldReceive('findLatestContactByEmail')->once()->with('ada@example.test')->andReturn([
+            'status' => 'success', 'external_contact_id' => '4711',
+            'contact_types' => ['Interessent'], 'matches' => ['4711', '3987', '1822'], 'raw' => [],
+        ]);
+        $client->shouldReceive('createContactWithRemark')->never();
+        $client->shouldReceive('createEstate')->once()->withArgs(function (array $property, string $note): bool {
+            return str_contains($note, 'Vorhandener Kontakt aus Datenbank')
+                && str_contains($note, 'ACHTUNG: Aktuell als Interessent geführt');
+        })->andReturn(['status' => 'success', 'external_estate_id' => 'estate-42', 'raw' => []]);
+        $client->shouldReceive('createOwnerRelation')->once()->with('estate-42', '4711')->andReturn([
+            'status' => 'success', 'raw' => [],
+        ]);
+
+        $log = (new LeadSyncService($client))->sync($lead);
+
+        $this->assertSame('success', $log->status);
+        $this->assertSame('4711', $log->external_contact_id);
+        $this->assertStringContainsString('Vorhandener Kontakt aus Datenbank', data_get($log->request_payload, 'estate.internal_note'));
+        $this->assertStringContainsString('ACHTUNG: Aktuell als Interessent geführt', data_get($log->request_payload, 'estate.internal_note'));
     }
 
     public function test_failed_valuation_keeps_message_without_sending_zero_prices(): void
