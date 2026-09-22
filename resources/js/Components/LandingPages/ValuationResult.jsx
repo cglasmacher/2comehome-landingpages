@@ -3,7 +3,6 @@ import { CalendlyModal, safeCalendlyUrl } from '@/Components/CalendlyModal';
 import Icon from '@/Components/ui/Icon';
 import { formatCurrency } from '@/lib/utils';
 
-const labels = { einfamilienhaus: 'Einfamilienhaus', 'doppelhaushälfte': 'Doppelhaushälfte', reihenhaus: 'Reihenhaus', wohnung: 'Wohnung', maisonette: 'Maisonette', 'grundstück': 'Grundstück' };
 
 export default function ValuationResult({ valuation, summary, reportUrl, calendlyUrl, emailStatus }) {
     const [bookingOpen, setBookingOpen] = useState(false);
@@ -13,7 +12,7 @@ export default function ValuationResult({ valuation, summary, reportUrl, calendl
     const address = [[property.street, property.house_number].filter(Boolean).join(' '), [property.zip, property.city].filter(Boolean).join(' ')].filter(Boolean).join(', ');
     const validCalendar = safeCalendlyUrl(calendlyUrl);
     const details = [
-        ['Immobilienart', labels[property.property_type] ?? property.property_type],
+        ['Immobilienart', property.property_type_label ?? property.property_type],
         ['Wohnfläche', property.living_area ? property.living_area + ' m²' : null],
         ['Grundstück', property.plot_area ? property.plot_area + ' m²' : null],
         ['Baujahr', property.construction_year],

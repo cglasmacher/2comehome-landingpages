@@ -4,14 +4,6 @@ import ValuationProcessingState from '@/Components/LandingPages/ValuationProcess
 import Icon from './ui/Icon';
 import { Button } from './ui/Button';
 
-const propertyTypes = [
-    ['einfamilienhaus', 'Einfamilienhaus', 'home'],
-    ['doppelhaushälfte', 'Doppelhaushälfte', 'home'],
-    ['reihenhaus', 'Reihenhaus', 'home'],
-    ['wohnung', 'Wohnung', 'building'],
-    ['maisonette', 'Maisonette', 'building'],
-    ['grundstück', 'Grundstück', 'land'],
-];
 const propertyFields = [
     ['street', 'Straße', 'text', 'z. B. Gartenstraße', 'address-line1'],
     ['house_number', 'Hausnummer', 'text', 'z. B. 12', 'address-line2'],
@@ -27,7 +19,7 @@ function Field({ id, label, error, ...props }) {
     return <div className="form-field"><label htmlFor={id}>{label}</label><input id={id} className="input" aria-invalid={Boolean(error)} aria-describedby={error ? id + '-error' : undefined} {...props} />{error && <p id={id + '-error'} className="field-error" role="alert">{error}</p>}</div>;
 }
 
-export function ValuationForm({ action, onSuccess }) {
+export function ValuationForm({ action, onSuccess, propertyTypes = [] }) {
     const [step, setStep] = useState(0);
     const heading = useRef(null);
     const form = useRef(null);
@@ -60,7 +52,7 @@ export function ValuationForm({ action, onSuccess }) {
             <form ref={form} onSubmit={submit} noValidate={false}>
                 {step === 0 ? (
                     <>
-                        <fieldset className="property-selector"><legend>Immobilienart</legend><div className="property-options">{propertyTypes.map(([value, label, icon]) => (
+                        <fieldset className="property-selector"><legend>Immobilienart</legend><div className="property-options">{propertyTypes.map(({ value, label, icon }) => (
                             <label className={data.property.property_type === value ? 'property-option selected' : 'property-option'} key={value}>
                                 <input type="radio" name="property_type" value={value} checked={data.property.property_type === value} onChange={() => changeProperty('property_type', value)} />
                                 <Icon name={icon} size={25} /><span>{label}</span>
@@ -77,7 +69,7 @@ export function ValuationForm({ action, onSuccess }) {
                     </>
                 ) : (
                     <>
-                        <div className="contact-context"><Icon name="home" /><span>{propertyTypes.find(([value]) => value === data.property.property_type)?.[1] || 'Ihre Immobilie'}{data.property.city ? ' in ' + data.property.city : ''}</span><button type="button" onClick={() => changeStep(0)}>Ändern</button></div>
+                        <div className="contact-context"><Icon name="home" /><span>{propertyTypes.find((type) => type.value === data.property.property_type)?.label || 'Ihre Immobilie'}{data.property.city ? ' in ' + data.property.city : ''}</span><button type="button" onClick={() => changeStep(0)}>Ändern</button></div>
                         <div className="field-grid">
                             <Field id="first_name" label="Vorname" autoComplete="given-name" value={data.first_name} onChange={(event) => setData('first_name', event.target.value)} error={errors.first_name} />
                             <Field id="last_name" label="Nachname" autoComplete="family-name" value={data.last_name} onChange={(event) => setData('last_name', event.target.value)} error={errors.last_name} />

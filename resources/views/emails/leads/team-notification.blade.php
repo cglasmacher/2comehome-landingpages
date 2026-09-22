@@ -9,7 +9,7 @@
 <p>{{ trim($lead->first_name.' '.$lead->last_name) }}<br>
 <a href="mailto:{{ $lead->email }}">{{ $lead->email }}</a><br>{{ $lead->phone }}</p>
 <h2 style="font-size:18px">Immobilie</h2>
-<p>{{ $lead->property?->property_type }}<br>
+<p>{{ $lead->property?->property_type_label }}<br>
 {{ $lead->property?->street }} {{ $lead->property?->house_number }}<br>
 {{ $lead->property?->zip }} {{ $lead->property?->city }}<br>
 Wohnfläche: {{ $lead->property?->living_area ?? '–' }} m² · Grundstück: {{ $lead->property?->plot_area ?? '–' }} m²<br>

@@ -11,15 +11,13 @@ class SomanticClient
     public function valuate(array $property): array
     {
         $type = Str::lower(trim((string) ($property['property_type'] ?? '')));
-        $types = [
-            'einfamilienhaus' => 'haus', 'doppelhaushälfte' => 'haus', 'reihenhaus' => 'haus',
-            'wohnung' => 'wohnung', 'maisonette' => 'wohnung',
-        ];
-        if (! isset($types[$type]) || ! in_array(strtoupper($property['country'] ?? 'DE'), ['DE', 'DEU'], true)) {
+        $somanticType = config('landingpages.property_types.'.$type.'.somantic');
+        if (! is_string($somanticType) || $somanticType === ''
+            || ! in_array(strtoupper($property['country'] ?? 'DE'), ['DE', 'DEU'], true)) {
             throw new RuntimeException('unsupported_property');
         }
         $payload = [
-            'typ' => $types[$type],
+            'typ' => $somanticType,
             'street' => trim(($property['street'] ?? '').' '.($property['house_number'] ?? '')),
             'postcode' => (string) ($property['zip'] ?? ''),
             'city' => (string) ($property['city'] ?? ''),

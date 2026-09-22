@@ -204,7 +204,7 @@
         </tr>
         <tr>
             <td class="label">Objektart</td>
-            <td class="value">{{ $property?->property_type ?: '-' }}</td>
+            <td class="value">{{ $property?->property_type_label ?: '-' }}</td>
         </tr>
         <tr>
             <td class="label">Baujahr</td>

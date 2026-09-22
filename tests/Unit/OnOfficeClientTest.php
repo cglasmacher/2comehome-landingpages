@@ -21,6 +21,7 @@ class OnOfficeClientTest extends TestCase
         config()->set('landingpages.onoffice.estate_status2_label', 'in akquise');
         config()->set('landingpages.onoffice.estate_user_id', 17);
         config()->set('landingpages.onoffice.estate_note_field', 'interne_Bemerkung');
+        config()->set('landingpages.onoffice.address_owner_contact_type_key', 'owner_key');
         Http::preventStrayRequests();
         Cache::flush();
     }
@@ -105,6 +106,30 @@ class OnOfficeClientTest extends TestCase
                 && $action['parameters']['parentid'] === ['estate-42']
                 && $action['parameters']['childid'] === ['contact-7']
                 && $action['parameters']['relationtype'] === 'urn:onoffice-de-ns:smart:2.5:relationTypes:estate:address:owner';
+        });
+    }
+
+    public function test_it_sets_eigentuemer_contact_type_when_creating_a_new_address(): void
+    {
+        Http::fake([
+            'https://api.onoffice.test' => Http::response($this->successResponse('4711'), 200),
+        ]);
+
+        $response = app(OnOfficeClient::class)->createContactWithRemark([
+            'first_name' => 'Ada',
+            'last_name' => 'Lovelace',
+            'email' => 'ada@example.test',
+        ], '');
+
+        $this->assertSame('success', $response['status']);
+        $this->assertSame('4711', $response['external_contact_id']);
+
+        Http::assertSent(function ($request): bool {
+            $action = $request->data()['request']['actions'][0];
+
+            return $action['resourcetype'] === 'address'
+                && $action['parameters']['ArtDaten'] === ['owner_key']
+                && $action['parameters']['email'] === 'ada@example.test';
         });
     }
 
