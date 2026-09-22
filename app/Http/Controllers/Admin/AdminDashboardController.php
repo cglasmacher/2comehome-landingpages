@@ -30,8 +30,8 @@ class AdminDashboardController extends Controller
                         ->orWhereHas('syncLogs', function ($query) use ($search): void {
                             $query->where('provider', 'onoffice')
                                 ->where(function ($query) use ($search): void {
-                                    $query->where('external_contact_id', 'like', '%'.$search.'%')
-                                        ->orWhere('external_estate_id', 'like', '%'.$search.'%');
+                                    $query->where('onoffice_kdnr', 'like', '%'.$search.'%')
+                                        ->orWhere('onoffice_immonr', 'like', '%'.$search.'%');
                                 });
                         });
                 });
@@ -61,8 +61,8 @@ class AdminDashboardController extends Controller
                 ]))),
             ],
             'onoffice' => [
-                'contact_id' => $lead->latestOnOfficeSync?->external_contact_id,
-                'estate_id' => $lead->latestOnOfficeSync?->external_estate_id,
+                'kdnr' => $lead->latestOnOfficeSync?->onoffice_kdnr,
+                'immonr' => $lead->latestOnOfficeSync?->onoffice_immonr,
             ],
             'valuation' => [
                 'estimated_value' => $lead->valuation?->estimated_value,
