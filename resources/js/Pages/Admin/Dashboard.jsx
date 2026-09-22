@@ -1,6 +1,7 @@
 import { Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 import AdminLayout from '@/Components/Admin/AdminLayout';
+import { route } from 'ziggy-js';
 
 const money = (value) => {
     if (!value) return '—';
