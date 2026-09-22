@@ -70,10 +70,15 @@ class AdminLeadController extends Controller
         $low = round((float) $data['range_low'], 2);
         $high = round((float) $data['range_high'], 2);
 
-        if ($low > $high || $estimated < $low || $estimated > $high) {
+        if ($low > $high) {
+            throw ValidationException::withMessages([
+                'range_low' => 'Der Mindestwert darf nicht über dem Höchstwert liegen.',
+            ]);
+        }
+
+        if ($estimated < $low || $estimated > $high) {
             throw ValidationException::withMessages([
                 'estimated_value' => 'Der Schätzwert muss innerhalb der Bewertungsspanne liegen.',
-                'range_low' => $low > $high ? 'Der Mindestwert darf nicht über dem Höchstwert liegen.' : null,
             ]);
         }
 
