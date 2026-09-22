@@ -10,10 +10,8 @@ use App\Http\Controllers\ValuationResultController;
 use Illuminate\Support\Facades\Route;
 
 Route::domain(config('landingpages.public_domain'))->group(function () {
-    Route::middleware('guest')->group(function () {
-        Route::get('/admin/login', [AdminAuthController::class, 'create'])->name('login');
-        Route::post('/admin/login', [AdminAuthController::class, 'store'])->name('admin.login.store');
-    });
+    Route::get('/admin/login', [AdminAuthController::class, 'create'])->name('login');
+    Route::post('/admin/login', [AdminAuthController::class, 'store'])->name('admin.login.store');
 
     Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
         Route::get('/', AdminDashboardController::class)->name('dashboard');
