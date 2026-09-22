@@ -30,9 +30,8 @@ export default function Show() {
                                     <div><Icon name="phone" /><span>Ein persönlicher Ansprechpartner</span></div>
                                 </div>
                                 <div className="process-note">
-                                    <span className="process-number">01—03</span>
                                     <h2>Ein guter Anfang für Ihre Entscheidung.</h2>
-                                    <ol><li><span>01</span> Immobilie beschreiben</li><li><span>02</span> Ersteinschätzung erhalten</li><li><span>03</span> Gemeinsam die nächsten Schritte besprechen</li></ol>
+                                    <ol><li><span>1</span> Eingabe Ihrer Daten</li><li><span>2</span> Unverbindliche Erstbewertung'</li><li><span>3</span> Gemeinsam die nächsten Schritte besprechen</li></ol>
                                 </div>
                                 <p className="intro-footnote">Unverbindliche Orientierung – keine verbindliche Verkehrswertermittlung.</p>
                             </section>
