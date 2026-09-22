@@ -421,9 +421,10 @@ class OnOfficeClient
     private function buildEstateParameters(array $propertyPayload, string $internalNote, string $status2, int $userId): array
     {
         $type = Str::lower(trim((string) ($propertyPayload['property_type'] ?? '')));
-        $types = config('landingpages.onoffice.property_types', []);
-        if ($type !== '' && ! isset($types[$type])) {
-            throw new InvalidArgumentException('Unsupported onOffice property type. Check landingpages.onoffice.property_types.');
+        $types = config('landingpages.property_types', []);
+        $onOfficeType = data_get($types, $type.'.onoffice');
+        if ($type !== '' && ! is_array($onOfficeType)) {
+            throw new InvalidArgumentException('Unsupported onOffice property type. Check landingpages.property_types.');
         }
         $country = strtoupper($propertyPayload['country'] ?? 'DE');
         $country = config('landingpages.onoffice.country_codes.'.$country, $country);
@@ -442,7 +443,7 @@ class OnOfficeClient
             $noteData[$descriptionField] = $description;
         }
 
-        return array_filter(array_merge($noteData, $types[$type] ?? [], [
+        return array_filter(array_merge($noteData, $onOfficeType ?? [], [
             'status' => self::INACTIVE_ESTATE_STATUS,
             'status2' => $status2,
             'benutzer' => $userId,
