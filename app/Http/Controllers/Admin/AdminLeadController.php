@@ -16,7 +16,7 @@ class AdminLeadController extends Controller
 {
     public function edit(Lead $lead): Response
     {
-        $lead->load(['landingPage', 'property', 'valuation']);
+        $lead->load(['landingPage', 'property', 'valuation', 'latestOnOfficeSync']);
 
         return Inertia::render('Admin/LeadEdit', [
             'lead' => [
@@ -41,6 +41,12 @@ class AdminLeadController extends Controller
                     'living_area' => $lead->property?->living_area,
                     'plot_area' => $lead->property?->plot_area,
                     'rooms' => $lead->property?->rooms,
+                ],
+                'onoffice' => [
+                    'contact_id' => $lead->latestOnOfficeSync?->external_contact_id,
+                    'estate_id' => $lead->latestOnOfficeSync?->external_estate_id,
+                    'sync_status' => $lead->latestOnOfficeSync?->status,
+                    'synced_at' => $lead->latestOnOfficeSync?->created_at?->format('d.m.Y H:i'),
                 ],
                 'valuation' => [
                     'estimated_value' => $lead->valuation?->estimated_value,
