@@ -6,6 +6,39 @@ return [
     'lead_notification_email' => env('LEAD_NOTIFICATION_EMAIL', 'c.glasmacher@2comehome.de'),
     'calendly_url' => env('CALENDLY_URL'),
 
+    'property_types' => [
+        'einfamilienhaus' => [
+            'label' => 'Einfamilienhaus',
+            'icon' => 'home',
+            'onoffice' => ['objektart' => 'haus', 'objekttyp' => 'einfamilienhaus'],
+        ],
+        'doppelhaushälfte' => [
+            'label' => 'Doppelhaushälfte',
+            'icon' => 'home',
+            'onoffice' => ['objektart' => 'haus', 'objekttyp' => 'doppelhaushaelfte'],
+        ],
+        'reihenhaus' => [
+            'label' => 'Reihenhaus',
+            'icon' => 'home',
+            'onoffice' => ['objektart' => 'haus', 'objekttyp' => 'reihenhaus'],
+        ],
+        'wohnung' => [
+            'label' => 'Wohnung',
+            'icon' => 'building',
+            'onoffice' => ['objektart' => 'wohnung'],
+        ],
+        'maisonette' => [
+            'label' => 'Maisonette',
+            'icon' => 'building',
+            'onoffice' => ['objektart' => 'wohnung', 'objekttyp' => 'maisonette'],
+        ],
+        'grundstück' => [
+            'label' => 'Grundstück',
+            'icon' => 'land',
+            'onoffice' => ['objektart' => 'grundstueck'],
+        ],
+    ],
+
     'pricehubble' => [
         'base_url' => env('PRICEHUBBLE_BASE_URL'),
         'api_key' => env('PRICEHUBBLE_API_KEY'),
@@ -29,14 +62,6 @@ return [
         'estate_user_id' => env('ONOFFICE_ESTATE_USER_ID'),
         'estate_user_initials' => env('ONOFFICE_ESTATE_USER_INITIALS', 'CG'),
         'country_codes' => ['DE' => 'DEU', 'AT' => 'AUT', 'CH' => 'CHE'],
-        'property_types' => [
-            'einfamilienhaus' => ['objektart' => 'haus', 'objekttyp' => 'einfamilienhaus'],
-            'doppelhaushälfte' => ['objektart' => 'haus', 'objekttyp' => 'doppelhaushaelfte'],
-            'reihenhaus' => ['objektart' => 'haus', 'objekttyp' => 'reihenhaus'],
-            'wohnung' => ['objektart' => 'wohnung'],
-            'maisonette' => ['objektart' => 'wohnung', 'objekttyp' => 'maisonette'],
-            'grundstück' => ['objektart' => 'grundstueck'],
-        ],
         'estate_status2_label' => env('ONOFFICE_ESTATE_STATUS2_LABEL', 'in akquise'),
         'estate_status2_cache_ttl' => (int) env('ONOFFICE_ESTATE_STATUS2_CACHE_TTL', 86400),
     ],
