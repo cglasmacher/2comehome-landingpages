@@ -29,6 +29,7 @@ export default function ValuationResult({ valuation, summary, reportUrl, calendl
                         <h2>{hasRange ? 'Eine erste Orientierung für Sie.' : 'Wir schauen persönlich genauer hin.'}</h2>
                         {hasRange ? <div className="estimate-numbers"><strong>{formatCurrency(valuation.range_low)}</strong><span>bis</span><strong>{formatCurrency(valuation.range_high)}</strong></div> : <p className="estimate-pending">Eine automatische Einschätzung ist derzeit nicht verfügbar. Ihre Anfrage liegt uns vor – wir prüfen die Angaben persönlich.</p>}
                         {hasRange && <div className="estimate-bar" aria-hidden="true"><i /><b /><i /></div>}
+                        {hasRange && valuation.source_label && <p className="estimate-disclaimer">Bewertungsquelle: {valuation.source_label}</p>}
                         <p className="estimate-disclaimer">Unverbindliche, automatisierte Ersteinschätzung. Sie ersetzt keine persönliche Marktanalyse und ist keine verbindliche Verkehrswertermittlung.</p>
                         {reportUrl && <a href={reportUrl} target="_blank" rel="noopener noreferrer" className="report-link"><span className="icon-tile"><Icon name="file" /></span><span><strong>Ihr Bericht als PDF</strong><small>Alle Angaben und die Ersteinschätzung</small></span><Icon name="arrow" size={20} /></a>}
                     </section>

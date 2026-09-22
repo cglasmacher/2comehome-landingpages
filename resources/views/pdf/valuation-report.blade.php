@@ -35,7 +35,12 @@
                 bis
                 {{ number_format((float) $valuation->range_high, 0, ',', '.') }} €
             </p>
-            <p class="muted">Automatisierte Ersteinschätzung mit +/- {{ $valuation->range_percent }} % Range.</p>
+            <p class="muted">Bewertungsquelle: {{ $valuation->source_label }}</p>
+            @if(data_get($valuation->provider_response, 'range_source') === 'provider')
+                <p class="muted">Preisspanne des Bewertungsanbieters.</p>
+            @else
+                <p class="muted">Orientierungsspanne mit +/- {{ $valuation->range_percent }} %.</p>
+            @endif
         @else
             <p>Eine Bewertung konnte noch nicht berechnet werden.</p>
         @endif

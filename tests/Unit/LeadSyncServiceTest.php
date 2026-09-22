@@ -99,6 +99,23 @@ class LeadSyncServiceTest extends TestCase
         $this->assertStringContainsString('Demo-Schätzung', $payload['description']);
     }
 
+    public function test_somantic_and_formula_values_keep_their_source_without_writing_pricehubble_fields(): void
+    {
+        $lead = $this->makeLead();
+        foreach (['somantic' => 'Somantic', 'formula' => 'Formelbasierte Orientierung'] as $provider => $label) {
+            $lead->valuation()->updateOrCreate([], [
+                'provider' => $provider, 'range_percent' => 10, 'status' => 'completed',
+                'estimated_value' => 500000, 'range_low' => 450000, 'range_high' => 550000,
+            ]);
+            $lead->load('valuation');
+            $service = new LeadSyncService(app(OnOfficeClient::class));
+            $payload = (new \ReflectionMethod($service, 'buildPropertyPayload'))->invoke($service, $lead);
+            $this->assertSame([], $payload['valuation']);
+            $this->assertStringContainsString('Bewertungsquelle: '.$label, $payload['description']);
+            $this->assertStringContainsString('Minimum: 450.000,00 EUR', $payload['description']);
+        }
+    }
+
     private function makeLead(): Lead
     {
         $template = LandingPageTemplate::create([

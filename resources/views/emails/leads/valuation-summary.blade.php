@@ -30,7 +30,7 @@
                                                 Wird persönlich geprüft
                                             @endif
                                         </p>
-                                        <p style="margin:10px 0 0; color:#6B7280; font-size:13px; line-height:1.5;">Unverbindliche automatisierte Ersteinschätzung – keine offizielle Einwertung.</p>
+                                        <p style="margin:10px 0 0; color:#6B7280; font-size:13px; line-height:1.5;">Bewertungsquelle: {{ $lead->valuation?->source_label }}. Unverbindliche automatisierte Ersteinschätzung – keine offizielle Einwertung.</p>
                                     </td>
                                 </tr>
                             </table>
