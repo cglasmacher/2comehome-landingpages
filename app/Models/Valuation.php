@@ -18,6 +18,21 @@ class Valuation extends Model
         'provider_response' => 'array',
     ];
 
+    public function getSourceLabelAttribute(): string
+    {
+        if (data_get($this->provider_response, 'confidence') === 'demo'
+            || data_get($this->provider_response, 'provider') === 'fake_pricehubble_until_credentials_arrive') {
+            return 'Formelbasierte Orientierung (Altbestand)';
+        }
+
+        return match ($this->provider) {
+            'somantic' => 'Somantic',
+            'pricehubble' => 'PriceHubble',
+            'formula' => 'Formelbasierte Orientierung',
+            default => 'Keine automatische Bewertung',
+        };
+    }
+
     public function lead(): BelongsTo
     {
         return $this->belongsTo(Lead::class);

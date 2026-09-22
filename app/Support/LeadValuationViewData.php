@@ -23,6 +23,8 @@ class LeadValuationViewData
                 'range_low' => $lead->valuation?->range_low,
                 'range_high' => $lead->valuation?->range_high,
                 'status' => $lead->valuation?->status,
+                'source_label' => $lead->valuation?->source_label,
+                'provider' => $lead->valuation?->provider,
             ],
             'lead_summary' => [
                 'contact' => [

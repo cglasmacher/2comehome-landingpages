@@ -12,5 +12,6 @@ readonly class ValuationResult
         public array $rawResponse = [],
         public string $status = 'completed',
         public ?string $errorMessage = null,
+        public string $provider = 'none',
     ) {}
 }

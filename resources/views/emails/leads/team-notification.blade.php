@@ -15,6 +15,7 @@
 Wohnfläche: {{ $lead->property?->living_area ?? '–' }} m² · Grundstück: {{ $lead->property?->plot_area ?? '–' }} m²<br>
 Baujahr: {{ $lead->property?->construction_year ?? '–' }} · Zimmer: {{ $lead->property?->rooms ?? '–' }}</p>
 <h2 style="font-size:18px">Ersteinschätzung</h2>
+<p>Bewertungsquelle: {{ $lead->valuation?->source_label }}</p>
 @if($lead->valuation?->range_low && $lead->valuation?->range_high)
 <p>{{ number_format((float) $lead->valuation->range_low, 0, ',', '.') }} € bis {{ number_format((float) $lead->valuation->range_high, 0, ',', '.') }} €</p>
 @else

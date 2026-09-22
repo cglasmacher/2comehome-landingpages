@@ -8,7 +8,7 @@ use App\Models\LandingPage;
 use App\Models\Lead;
 use App\Models\Valuation;
 use App\Services\OnOffice\LeadSyncService;
-use App\Services\PriceHubble\ValuationService;
+use App\Services\Valuation\ValuationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -49,7 +49,7 @@ class LeadSubmissionController extends Controller
 
             Valuation::create([
                 'lead_id' => $lead->id,
-                'provider' => 'pricehubble',
+                'provider' => $result->provider,
                 'estimated_value' => $result->estimatedValue,
                 'range_percent' => $result->rangePercent,
                 'range_low' => $result->rangeLow,

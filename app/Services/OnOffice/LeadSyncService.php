@@ -99,7 +99,7 @@ class LeadSyncService
             'plot_area' => $property?->plot_area,
             'rooms' => $property?->rooms,
             'description' => $this->buildEstateDescription($lead),
-            'valuation' => $this->isDemoValuation($lead) ? [] : $this->estateValuation($lead),
+            'valuation' => $this->isDemoValuation($lead) || ! in_array($lead->valuation?->provider, config('valuation.onoffice_price_fields_providers', ['pricehubble']), true) ? [] : $this->estateValuation($lead),
         ], static fn ($value) => $value !== null && $value !== '');
     }
 
@@ -146,6 +146,7 @@ class LeadSyncService
                     $lines[] = $label.': '.number_format($valuation[$key], 2, ',', '.').' EUR';
                 }
             }
+            $lines[] = 'Bewertungsquelle: '.$lead->valuation->source_label;
             $lines[] = 'Unverbindliche Ersteinschätzung; kein festgelegter Angebotspreis.';
             $parts[] = implode("\n", $lines);
         }
@@ -159,7 +160,7 @@ class LeadSyncService
         $valuation = $lead->valuation;
 
         return trim(sprintf(
-            "Lead aus Landingpage %s\n\nObjekt: %s %s, %s %s\nTyp: %s\nWohnfläche: %s m²\nGrundstück: %s m²\nBaujahr: %s\nZimmer: %s\n\nPriceHubble-Einwertung:\nSchätzwert: %s EUR\nRange: %s EUR bis %s EUR\nRange-Prozent: +/- %s %%\nStatus: %s\n\nTelefonische Kontaktaufnahme erlaubt: %s\n\nNotiz des Nutzers:\n%s",
+            "Lead aus Landingpage %s\n\nObjekt: %s %s, %s %s\nTyp: %s\nWohnfläche: %s m²\nGrundstück: %s m²\nBaujahr: %s\nZimmer: %s\n\nImmobilien-Ersteinschätzung:\nSchätzwert: %s EUR\nRange: %s EUR bis %s EUR\nKonfigurierter Ersatz-Spannenprozentsatz: %s %%\nStatus: %s\n\nTelefonische Kontaktaufnahme erlaubt: %s\n\nNotiz des Nutzers:\n%s",
             $lead->landingPage->slug, $property?->street, $property?->house_number, $property?->zip, $property?->city,
             $property?->property_type, $property?->living_area, $property?->plot_area, $property?->construction_year, $property?->rooms,
             $valuation?->estimated_value ? number_format((float) $valuation->estimated_value, 0, ',', '.') : 'nicht verfügbar',
