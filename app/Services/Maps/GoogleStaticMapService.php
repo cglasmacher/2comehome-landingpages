@@ -33,18 +33,42 @@ class GoogleStaticMapService
 
         $parameters = [
             'center' => $address,
-            'zoom' => (int) config('services.google_maps.static_zoom', 16),
+            'zoom' => (int) config('services.google_maps.static_zoom', 17),
             'size' => (string) config('services.google_maps.static_size', '640x320'),
             'scale' => (int) config('services.google_maps.static_scale', 2),
             'maptype' => 'roadmap',
-            'markers' => 'color:red|'.$address,
+            'markers' => 'color:0x0B2D48|'.$address,
             'key' => $apiKey,
         ];
+
+        // Quiet cadastral-style presentation for valuation reports:
+        // remove POIs/transit and most contextual labels, keep roads/buildings readable.
+        $styles = [
+            'feature:all|element:geometry|saturation:-100|lightness:18',
+            'feature:all|element:labels|visibility:off',
+            'feature:poi|visibility:off',
+            'feature:transit|visibility:off',
+            'feature:administrative|element:labels|visibility:off',
+            'feature:landscape.natural|element:labels|visibility:off',
+            'feature:landscape.man_made|element:geometry|color:0xeeeeea|visibility:on',
+            'feature:road|element:geometry|color:0xffffff|visibility:simplified',
+            'feature:road|element:labels.text|color:0x4f555b|visibility:on',
+            'feature:road|element:labels.icon|visibility:off',
+            'feature:administrative.land_parcel|element:labels.text|color:0x666666|visibility:on',
+            'feature:water|element:geometry|color:0xe5ebef',
+            'feature:water|element:labels|visibility:off',
+        ];
+
+        $endpoint = 'https://maps.googleapis.com/maps/api/staticmap?'
+            .implode('&', array_map(
+                static fn (string $style): string => 'style='.rawurlencode($style),
+                $styles,
+            ));
 
         try {
             $response = Http::timeout((int) config('services.google_maps.timeout', 10))
                 ->accept('image/*')
-                ->get('https://maps.googleapis.com/maps/api/staticmap', $parameters);
+                ->get($endpoint, $parameters);
 
             if (! $response->successful()) {
                 Log::error('Google Static Maps API request failed.', [
