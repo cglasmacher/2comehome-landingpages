@@ -122,14 +122,31 @@ class OnOfficeClient
             return $this->missingCredentials('contact');
         }
 
+        $ownerType = $this->resolveAddressOwnerContactType();
+        if ($ownerType['status'] !== 'success' || ! filled($ownerType['value'])) {
+            Log::error('onOffice owner contact type resolution failed', [
+                'label' => config('landingpages.onoffice.address_owner_contact_type_label', 'Eigentümer'),
+                'message' => $ownerType['error'] ?? 'Owner contact type could not be resolved.',
+                'permittedvalues' => data_get($ownerType, 'raw.permittedvalues'),
+            ]);
+
+            return [
+                'status' => 'failed',
+                'external_contact_id' => null,
+                'message' => $ownerType['error'] ?? 'onOffice owner contact type could not be resolved.',
+                'raw' => ['owner_type_resolution' => $ownerType['raw'] ?? []],
+            ];
+        }
+
         $outcome = $this->executeAction(
             self::RESOURCE_TYPE_ADDRESS,
-            $this->buildAddressParameters($contactPayload, $remark),
+            $this->buildAddressParameters($contactPayload, $remark, (string) $ownerType['value']),
         );
 
         return [
             'status' => $outcome['status'],
             'external_contact_id' => $outcome['record_id'],
+            'owner_type_resolution' => $ownerType['raw'],
             'message' => $outcome['message'],
             'raw' => $outcome['raw'],
         ];
@@ -465,13 +482,14 @@ class OnOfficeClient
      * @param  array<string, mixed>  $contactPayload
      * @return array<string, mixed>
      */
-    private function buildAddressParameters(array $contactPayload, string $remark): array
+    private function buildAddressParameters(array $contactPayload, string $remark, string $ownerTypeKey): array
     {
         return array_filter([
             'Vorname' => $contactPayload['first_name'] ?? null,
             'Name' => $contactPayload['last_name'] ?? null,
             'email' => $contactPayload['email'] ?? null,
             'phone' => $contactPayload['phone'] ?? null,
+            'ArtDaten' => [$ownerTypeKey],
             // 'kommentar' => $remark, */ This field is commented out because it is not supported by the onOffice API for address creation.
         ], static fn ($value) => $value !== null && $value !== '');
     }
@@ -490,6 +508,104 @@ class OnOfficeClient
             'message' => $message,
             'raw' => [],
         ];
+    }
+
+    /**
+     * Resolve the internal multiselect key for the visible contact type "Eigentümer".
+     * A configured key is preferred; otherwise the key is discovered via field configuration and cached.
+     *
+     * @return array{status:string,value:string|null,raw:array<string,mixed>,error?:string}
+     */
+    private function resolveAddressOwnerContactType(bool $refresh = false): array
+    {
+        $configuredKey = trim((string) config('landingpages.onoffice.address_owner_contact_type_key'));
+        if ($configuredKey !== '') {
+            return [
+                'status' => 'success',
+                'value' => $configuredKey,
+                'raw' => ['source' => 'config', 'value' => $configuredKey],
+            ];
+        }
+
+        $label = trim((string) config('landingpages.onoffice.address_owner_contact_type_label', 'Eigentümer'));
+        $configuration = $this->addressFields($refresh);
+        $permittedValues = data_get($configuration, 'fields.ArtDaten.permittedvalues', []);
+
+        if ($configuration['status'] !== 'success' || ! is_array($permittedValues)) {
+            return [
+                'status' => 'failed',
+                'value' => null,
+                'raw' => ['permittedvalues' => $permittedValues],
+                'error' => $configuration['message'] ?? 'onOffice ArtDaten field configuration did not return permitted values.',
+            ];
+        }
+
+        foreach ($permittedValues as $key => $permittedLabel) {
+            if (is_array($permittedLabel)) {
+                $permittedLabel = $permittedLabel['label'] ?? $permittedLabel['value'] ?? null;
+            }
+
+            if (! is_string($permittedLabel) || Str::lower(trim($permittedLabel)) !== Str::lower($label)) {
+                continue;
+            }
+
+            return [
+                'status' => 'success',
+                'value' => (string) $key,
+                'raw' => [
+                    'source' => 'field_configuration',
+                    'label' => $label,
+                    'value' => (string) $key,
+                ],
+            ];
+        }
+
+        return [
+            'status' => 'failed',
+            'value' => null,
+            'raw' => ['label' => $label, 'permittedvalues' => $permittedValues],
+            'error' => sprintf('onOffice address contact type "%s" was not found in ArtDaten.', $label),
+        ];
+    }
+
+    /** @return array{status:string,fields:array<string,mixed>,message:?string} */
+    private function addressFields(bool $refresh = false): array
+    {
+        $key = $this->cacheKey('address-fields.v1');
+
+        if ($refresh) {
+            Cache::forget($key);
+        } else {
+            $cached = Cache::get($key);
+            if (is_array($cached) && $cached !== []) {
+                return ['status' => 'success', 'fields' => $cached, 'message' => null];
+            }
+        }
+
+        $outcome = $this->executeAction(self::RESOURCE_TYPE_FIELDS, [
+            'labels' => true,
+            'language' => 'DEU',
+            'modules' => ['address'],
+        ], self::ACTION_ID_GET);
+
+        $module = collect(data_get($outcome, 'raw.response.results.0.data.records', []))
+            ->firstWhere('id', 'address');
+        $fields = data_get($module, 'elements', []);
+        $fields = is_array($fields)
+            ? array_filter($fields, static fn ($field) => is_array($field) && isset($field['type']))
+            : [];
+
+        if ($outcome['status'] !== 'success' || $fields === []) {
+            return [
+                'status' => 'failed',
+                'fields' => [],
+                'message' => $outcome['message'] ?? 'onOffice did not return address field definitions.',
+            ];
+        }
+
+        Cache::put($key, $fields, now()->addSeconds(max(60, (int) config('landingpages.onoffice.estate_status2_cache_ttl', 86400))));
+
+        return ['status' => 'success', 'fields' => $fields, 'message' => null];
     }
 
     private function cacheKey(string $suffix): string
