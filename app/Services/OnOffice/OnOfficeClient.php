@@ -31,6 +31,91 @@ class OnOfficeClient
 
     private const OWNER_RELATION_TYPE = 'urn:onoffice-de-ns:smart:2.5:relationTypes:estate:address:owner';
 
+    /**
+     * Find existing onOffice contacts by e-mail and return the record with the highest ID.
+     * ArtDaten is formatted so contact types such as "Eigentümer" are returned as labels.
+     */
+    public function findLatestContactByEmail(string $email): array
+    {
+        if (! $this->hasCredentials()) {
+            return [
+                'status' => 'failed',
+                'external_contact_id' => null,
+                'contact_types' => [],
+                'matches' => [],
+                'message' => 'onOffice credentials are missing.',
+                'raw' => [],
+            ];
+        }
+
+        $email = Str::lower(trim($email));
+        if ($email === '') {
+            return [
+                'status' => 'success',
+                'external_contact_id' => null,
+                'contact_types' => [],
+                'matches' => [],
+                'message' => null,
+                'raw' => [],
+            ];
+        }
+
+        $outcome = $this->executeAction(self::RESOURCE_TYPE_ADDRESS, [
+            'data' => ['email', 'ArtDaten'],
+            'filter' => ['email' => [['op' => '=', 'val' => $email]]],
+            'listlimit' => 500,
+            'formatoutput' => true,
+            'outputlanguage' => 'DEU',
+        ], self::ACTION_ID_READ);
+
+        if ($outcome['status'] !== 'success') {
+            return [
+                'status' => 'failed',
+                'external_contact_id' => null,
+                'contact_types' => [],
+                'matches' => [],
+                'message' => $outcome['message'],
+                'raw' => $outcome['raw'],
+            ];
+        }
+
+        $records = collect(data_get($outcome, 'raw.response.results.0.data.records', []))
+            ->filter(fn ($record) => ctype_digit((string) data_get($record, 'id')))
+            ->sortByDesc(fn ($record) => (int) data_get($record, 'id'))
+            ->values();
+
+        $selected = $records->first();
+        $contactTypes = $this->normalizeContactTypes(data_get($selected, 'elements.ArtDaten'));
+
+        return [
+            'status' => 'success',
+            'external_contact_id' => $selected ? (string) data_get($selected, 'id') : null,
+            'contact_types' => $contactTypes,
+            'matches' => $records->map(fn ($record) => (string) data_get($record, 'id'))->all(),
+            'message' => null,
+            'raw' => $outcome['raw'],
+        ];
+    }
+
+    /** @return list<string> */
+    private function normalizeContactTypes(mixed $value): array
+    {
+        if (is_array($value)) {
+            $values = $value;
+        } elseif (is_string($value)) {
+            $values = preg_split('/\\s*[|,;]\\s*/u', $value) ?: [];
+        } else {
+            $values = [];
+        }
+
+        return collect($values)
+            ->map(fn ($item) => trim((string) $item))
+            ->filter()
+            ->unique(fn ($item) => Str::lower($item))
+            ->values()
+            ->all();
+    }
+
     public function createContactWithRemark(array $contactPayload, string $remark): array
     {
         if (! $this->hasCredentials()) {
