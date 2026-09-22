@@ -60,6 +60,8 @@ class AdminLeadController extends Controller
                 ],
                 'pdf_preview_url' => route('admin.leads.pdf.preview', $lead),
                 'pdf_download_url' => route('admin.leads.pdf.download', $lead),
+                'final_pdf_preview_url' => route('admin.leads.final-pdf.preview', $lead),
+                'final_pdf_download_url' => route('admin.leads.final-pdf.download', $lead),
             ],
         ]);
     }
@@ -126,5 +128,15 @@ class AdminLeadController extends Controller
     public function download(Lead $lead, ValuationReportPdfService $pdfService): HttpResponse
     {
         return $pdfService->download($lead);
+    }
+
+    public function finalPreview(Lead $lead, ValuationReportPdfService $pdfService): HttpResponse
+    {
+        return $pdfService->stream($lead, ValuationReportPdfService::TYPE_FINAL);
+    }
+
+    public function finalDownload(Lead $lead, ValuationReportPdfService $pdfService): HttpResponse
+    {
+        return $pdfService->download($lead, ValuationReportPdfService::TYPE_FINAL);
     }
 }
