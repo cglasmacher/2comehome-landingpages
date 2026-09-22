@@ -14,7 +14,7 @@ export default function Show() {
                 <header className="site-header">
                     <div className="site-container header-inner">
                         <a href={route('landing-pages.show', page.slug)} aria-label="2 COME HOME – zur Landingpage"><img src="/images/logo-2comehome.png" alt="2 COME HOME Immobilien" className="brand-logo" /></a>
-                        <div className="header-caption"><span className="status-dot" /> Immobilien. Persönlich begleitet.</div>
+                        <h1 className="header-headline">Kostenlose Ersteinschätzung und Beratung</h1>
                         <a className="header-link" href={valuation ? '#rueckruf' : '#bewertung'}>{valuation ? 'Gespräch vereinbaren' : 'Zur Bewertung'} <Icon name="arrow" size={17} /></a>
                     </div>
                 </header>
