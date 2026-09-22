@@ -340,12 +340,29 @@ class OnOfficeClient
 
         $status = $message === null ? 'success' : 'failed';
         if ($debug || $status === 'failed') {
-            Log::log($status === 'success' ? 'info' : 'error', 'onOffice API action completed', [
-                'identifier' => $identifier, 'resource_type' => $resourceType, 'action_id' => $actionId,
-                'http_status' => $httpResponse->status(), 'status' => $status,
-                'global_errorcode' => $globalCode, 'errorcode' => $actionCode,
-                'record_id' => is_scalar($recordId) ? $recordId : null, 'message' => $message,
-            ]);
+            $logContext = [
+                'identifier' => $identifier,
+                'resource_type' => $resourceType,
+                'resource_id' => $resourceId !== '' ? $resourceId : null,
+                'action_id' => $actionId,
+                'http_status' => $httpResponse->status(),
+                'status' => $status,
+                'global_status' => $globalStatus,
+                'global_errorcode' => $globalCode,
+                'errorcode' => $actionCode,
+                'record_id' => is_scalar($recordId) ? $recordId : null,
+                'message' => $message,
+            ];
+
+            if ($status === 'failed') {
+                // Log the complete onOffice response and the request parameters for API diagnostics.
+                // Credentials/HMAC are intentionally excluded.
+                $logContext['request_parameters'] = $parameters;
+                $logContext['response_payload'] = $body;
+                $logContext['response_body'] = $httpResponse->body();
+            }
+
+            Log::log($status === 'success' ? 'info' : 'error', 'onOffice API action completed', $logContext);
         }
 
         return [
