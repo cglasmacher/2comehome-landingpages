@@ -3,28 +3,25 @@
 namespace App\Services\Pdf;
 
 use App\Models\Lead;
+use App\Services\Maps\GoogleStaticMapService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Symfony\Component\HttpFoundation\Response;
 
 class ValuationReportPdfService
 {
+    public function __construct(private readonly GoogleStaticMapService $mapService) {}
+
     public function bytes(Lead $lead): string
     {
         $lead->loadMissing(['landingPage', 'property', 'valuation']);
-        return Pdf::loadView('pdf.valuation-report', [
-            'lead' => $lead, 'property' => $lead->property, 'valuation' => $lead->valuation,
-        ])->setPaper('a4')->output();
+        return Pdf::loadView('pdf.valuation-report', $this->viewData($lead))->setPaper('a4')->output();
     }
 
     public function stream(Lead $lead): Response
     {
         $lead->loadMissing(['landingPage', 'property', 'valuation']);
 
-        $pdf = Pdf::loadView('pdf.valuation-report', [
-            'lead' => $lead,
-            'property' => $lead->property,
-            'valuation' => $lead->valuation,
-        ])->setPaper('a4');
+        $pdf = Pdf::loadView('pdf.valuation-report', $this->viewData($lead))->setPaper('a4');
 
         return $pdf->stream('bewertungsbericht-' . $lead->uuid . '.pdf');
     }
@@ -33,12 +30,18 @@ class ValuationReportPdfService
     {
         $lead->loadMissing(['landingPage', 'property', 'valuation']);
 
-        $pdf = Pdf::loadView('pdf.valuation-report', [
+        $pdf = Pdf::loadView('pdf.valuation-report', $this->viewData($lead))->setPaper('a4');
+
+        return $pdf->download('bewertungsbericht-' . $lead->uuid . '.pdf');
+    }
+    /** @return array<string, mixed> */
+    private function viewData(Lead $lead): array
+    {
+        return [
             'lead' => $lead,
             'property' => $lead->property,
             'valuation' => $lead->valuation,
-        ])->setPaper('a4');
-
-        return $pdf->download('bewertungsbericht-' . $lead->uuid . '.pdf');
+            'mapImage' => $this->mapService->forProperty($lead->property),
+        ];
     }
 }
