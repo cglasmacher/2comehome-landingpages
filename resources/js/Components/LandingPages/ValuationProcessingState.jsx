@@ -1,31 +1,4 @@
-import { useEffect, useState } from 'react';
-
-function formatElapsedTime(totalSeconds) {
-    const minutes = Math.floor(totalSeconds / 60)
-        .toString()
-        .padStart(2, '0');
-    const seconds = (totalSeconds % 60).toString().padStart(2, '0');
-
-    return `${minutes}:${seconds}`;
-}
-
 export default function ValuationProcessingState({ isProcessing }) {
-    const [elapsedSeconds, setElapsedSeconds] = useState(0);
-
-    useEffect(() => {
-        if (!isProcessing) {
-            setElapsedSeconds(0);
-            return undefined;
-        }
-
-        const startedAt = Date.now();
-        const timerId = window.setInterval(() => {
-            setElapsedSeconds(Math.floor((Date.now() - startedAt) / 1000));
-        }, 1000);
-
-        return () => window.clearInterval(timerId);
-    }, [isProcessing]);
-
     if (!isProcessing) {
         return null;
     }
@@ -38,19 +11,30 @@ export default function ValuationProcessingState({ isProcessing }) {
             aria-atomic="true"
         >
             <div className="flex items-center gap-4">
-                <span className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-primary/30 bg-white text-primary">
-                    <span className="absolute inset-1 rounded-full border border-primary/20" />
-                    <span className="relative h-2.5 w-2.5 rounded-full bg-primary animate-pulse" />
+                <span className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-primary/25 bg-white text-primary">
+                    <svg
+                        viewBox="0 0 24 24"
+                        className="h-7 w-7"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.7"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden="true"
+                    >
+                        <circle cx="12" cy="12" r="8.5" />
+                        <path d="M12 7.5v4.8l3.2 2" className="origin-center animate-spin" style={{ animationDuration: '2.2s' }} />
+                    </svg>
                 </span>
+
                 <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-(--color-secondary)">Ihre Immobilie wird gerade eingeordnet</p>
+                    <p className="text-sm font-semibold text-(--color-secondary)">
+                        Ihre Immobilienbewertung wird erstellt
+                    </p>
                     <p className="mt-1 text-sm leading-5 text-(--color-muted)">
-                        Unser System verarbeitet Ihre Angaben. Einen Moment bitte – anschließend werden Sie direkt zur Ergebnisseite weitergeleitet.
+                        Bitte einen kurzen Moment warten. Wir prüfen Ihre Angaben und leiten Sie anschließend automatisch zu Ihrer Ersteinschätzung weiter.
                     </p>
                 </div>
-                <time className="shrink-0 font-mono text-lg font-semibold tabular-nums text-(--color-secondary)" dateTime={`PT${elapsedSeconds}S`}>
-                    {formatElapsedTime(elapsedSeconds)}
-                </time>
             </div>
         </div>
     );
