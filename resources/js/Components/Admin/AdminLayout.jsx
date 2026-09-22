@@ -1,4 +1,5 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
+import { route } from 'ziggy-js';
 
 export default function AdminLayout({ title, children }) {
     const { auth } = usePage().props;
