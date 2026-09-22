@@ -7,7 +7,6 @@ use App\Models\Lead;
 use App\Services\Pdf\ValuationReportPdfService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\Response as HttpResponse;
@@ -78,30 +77,14 @@ class AdminLeadController extends Controller
         $low = round((float) $data['range_low'], 2);
         $high = round((float) $data['range_high'], 2);
 
-        if ($low > $high) {
-            throw ValidationException::withMessages([
-                'range_low' => 'Der Mindestwert darf nicht über dem Höchstwert liegen.',
-            ]);
-        }
-
-        if ($estimated < $low || $estimated > $high) {
-            throw ValidationException::withMessages([
-                'estimated_value' => 'Der Schätzwert muss innerhalb der Bewertungsspanne liegen.',
-            ]);
-        }
-
         $valuation = $lead->valuation()->firstOrNew();
         $previousProvider = $valuation->exists ? $valuation->provider : null;
         $previousResponse = is_array($valuation->provider_response) ? $valuation->provider_response : [];
 
-        $lowerPercent = $estimated > 0 ? (($estimated - $low) / $estimated) * 100 : 0;
-        $upperPercent = $estimated > 0 ? (($high - $estimated) / $estimated) * 100 : 0;
-        $rangePercent = round(max($lowerPercent, $upperPercent), 2);
-
         $valuation->fill([
             'provider' => 'manual',
             'estimated_value' => $estimated,
-            'range_percent' => $rangePercent,
+            'range_percent' => 0,
             'range_low' => $low,
             'range_high' => $high,
             'status' => 'success',
