@@ -61,7 +61,7 @@ class OnOfficeClient
         }
 
         $outcome = $this->executeAction(self::RESOURCE_TYPE_ADDRESS, [
-            'data' => ['email', 'ArtDaten'],
+            'data' => ['email', 'ArtDaten', 'KdNr'],
             'filter' => ['email' => [['op' => '=', 'val' => $email]]],
             'listlimit' => 500,
             'formatoutput' => true,
@@ -90,6 +90,7 @@ class OnOfficeClient
         return [
             'status' => 'success',
             'external_contact_id' => $selected ? (string) data_get($selected, 'id') : null,
+            'onoffice_kdnr' => $selected ? (string) data_get($selected, 'elements.KdNr') : null,
             'contact_types' => $contactTypes,
             'matches' => $records->map(fn ($record) => (string) data_get($record, 'id'))->all(),
             'message' => null,
@@ -143,9 +144,14 @@ class OnOfficeClient
             $this->buildAddressParameters($contactPayload, $remark, (string) $ownerType['value']),
         );
 
+        $reference = $outcome['status'] === 'success' && filled($outcome['record_id'])
+            ? $this->readContactReferenceNumber((string) $outcome['record_id'])
+            : null;
+
         return [
             'status' => $outcome['status'],
             'external_contact_id' => $outcome['record_id'],
+            'onoffice_kdnr' => data_get($reference, 'value'),
             'owner_type_resolution' => $ownerType['raw'],
             'message' => $outcome['message'],
             'raw' => $outcome['raw'],
@@ -231,9 +237,14 @@ class OnOfficeClient
             }
         }
 
+        $reference = $outcome['status'] === 'success' && filled($outcome['record_id'])
+            ? $this->readEstateReferenceNumber((string) $outcome['record_id'])
+            : null;
+
         return [
             'status' => $outcome['status'],
             'external_estate_id' => $outcome['record_id'],
+            'onoffice_immonr' => data_get($reference, 'value'),
             'status2_resolution' => $status2Resolution['raw'],
             'valuation_fields' => $valuationFields,
             'message' => $outcome['message'],
@@ -266,6 +277,40 @@ class OnOfficeClient
             'status' => $outcome['status'],
             'message' => $outcome['message'],
             'raw' => $outcome['raw'],
+        ];
+    }
+
+    /** @return array{status:string,value:string|null,message:?string} */
+    public function readContactReferenceNumber(string $contactId): array
+    {
+        $outcome = $this->executeAction(self::RESOURCE_TYPE_ADDRESS, [
+            'data' => ['KdNr'],
+            'formatoutput' => false,
+        ], self::ACTION_ID_READ, $contactId);
+
+        $value = data_get($outcome, 'raw.response.results.0.data.records.0.elements.KdNr');
+
+        return [
+            'status' => $outcome['status'],
+            'value' => is_scalar($value) && filled($value) ? (string) $value : null,
+            'message' => $outcome['message'],
+        ];
+    }
+
+    /** @return array{status:string,value:string|null,message:?string} */
+    public function readEstateReferenceNumber(string $estateId): array
+    {
+        $outcome = $this->executeAction(self::RESOURCE_TYPE_ESTATE, [
+            'data' => ['objektnr_extern'],
+            'formatoutput' => false,
+        ], self::ACTION_ID_READ, $estateId);
+
+        $value = data_get($outcome, 'raw.response.results.0.data.records.0.elements.objektnr_extern');
+
+        return [
+            'status' => $outcome['status'],
+            'value' => is_scalar($value) && filled($value) ? (string) $value : null,
+            'message' => $outcome['message'],
         ];
     }
 
