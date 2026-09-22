@@ -11,8 +11,12 @@ use Inertia\Response;
 
 class AdminAuthController extends Controller
 {
-    public function create(): Response
+    public function create(): Response|RedirectResponse
     {
+        if (Auth::check() && request()->user()?->is_admin) {
+            return redirect()->route('admin.dashboard');
+        }
+
         return Inertia::render('Admin/Login');
     }
 
