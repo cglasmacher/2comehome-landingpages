@@ -28,6 +28,15 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'google_maps' => [
+        'key' => env('GOOGLE_MAPS_API_KEY'),
+        'static_enabled' => env('GOOGLE_MAPS_STATIC_ENABLED', true),
+        'static_zoom' => (int) env('GOOGLE_MAPS_STATIC_ZOOM', 16),
+        'static_size' => env('GOOGLE_MAPS_STATIC_SIZE', '640x320'),
+        'static_scale' => (int) env('GOOGLE_MAPS_STATIC_SCALE', 2),
+        'timeout' => (int) env('GOOGLE_MAPS_TIMEOUT', 10),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),
