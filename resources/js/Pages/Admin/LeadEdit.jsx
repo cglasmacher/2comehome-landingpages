@@ -42,13 +42,30 @@ export default function LeadEdit({ lead }) {
                     <p className="mt-2 text-sm text-[#74776f]">{lead.property?.property_type_label || 'Immobilie'} · {address || 'Adresse nicht vollständig'}</p>
                 </div>
 
-                <div className="flex flex-wrap gap-2">
-                    <a href={lead.pdf_preview_url} target="_blank" rel="noreferrer" className="rounded-md border border-[#172741] px-4 py-2.5 text-xs font-semibold text-[#172741] hover:bg-white">
-                        PDF neu erzeugen / ansehen
-                    </a>
-                    <a href={lead.pdf_download_url} className="rounded-md bg-[#172741] px-4 py-2.5 text-xs font-semibold text-white hover:bg-[#223a5e]">
-                        PDF herunterladen
-                    </a>
+                <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="rounded-lg border border-[#d9d5cc] bg-white p-3 shadow-sm">
+                        <div className="mb-2 text-[10px] font-semibold uppercase tracking-[.12em] text-[#8a8d85]">Ersteinschätzung</div>
+                        <div className="flex flex-wrap gap-2">
+                            <a href={lead.pdf_preview_url} target="_blank" rel="noreferrer" className="rounded-md border border-[#172741] px-3 py-2 text-xs font-semibold text-[#172741] hover:bg-[#f7f7f5]">
+                                Ansehen
+                            </a>
+                            <a href={lead.pdf_download_url} className="rounded-md bg-[#172741] px-3 py-2 text-xs font-semibold text-white hover:bg-[#223a5e]">
+                                Download
+                            </a>
+                        </div>
+                    </div>
+
+                    <div className="rounded-lg border border-[#d9d5cc] bg-white p-3 shadow-sm">
+                        <div className="mb-2 text-[10px] font-semibold uppercase tracking-[.12em] text-[#a24a3d]">Abschließende Wertermittlung</div>
+                        <div className="flex flex-wrap gap-2">
+                            <a href={lead.final_pdf_preview_url} target="_blank" rel="noreferrer" className="rounded-md border border-[#b44637] px-3 py-2 text-xs font-semibold text-[#a23b2e] hover:bg-[#fcf5f1]">
+                                Ansehen
+                            </a>
+                            <a href={lead.final_pdf_download_url} className="rounded-md bg-[#b44637] px-3 py-2 text-xs font-semibold text-white hover:bg-[#963b2f]">
+                                Download
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
 
