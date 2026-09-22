@@ -250,20 +250,6 @@
                         {{ number_format((float) $valuation->range_high, 0, ',', '.') }} €
                     </td>
                 </tr>
-                <tr>
-                    <td class="label">Bewertungsquelle</td>
-                    <td>{{ $valuation->source_label }}</td>
-                </tr>
-                <tr>
-                    <td class="label">Einordnung</td>
-                    <td>
-                        @if(data_get($valuation->provider_response, 'range_source') === 'provider')
-                            Preisspanne des Bewertungsanbieters
-                        @else
-                            Orientierungsspanne mit +/- {{ $valuation->range_percent }} %
-                        @endif
-                    </td>
-                </tr>
             </table>
         @else
             <p>Eine Bewertung konnte noch nicht berechnet werden.</p>
