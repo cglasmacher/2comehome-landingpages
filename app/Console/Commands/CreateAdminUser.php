@@ -7,14 +7,15 @@ use Illuminate\Console\Command;
 
 class CreateAdminUser extends Command
 {
-    protected $signature = 'admin:create {email} {--name=Administrator}';
+    protected $signature = 'admin:create {email} {name* : Optionaler Anzeigename}';
 
     protected $description = 'Create or update an administrator account for the valuation dashboard';
 
     public function handle(): int
     {
         $email = mb_strtolower(trim((string) $this->argument('email')));
-        $name = trim((string) $this->option('name')) ?: 'Administrator';
+        $nameParts = $this->argument('name');
+        $name = trim(implode(' ', is_array($nameParts) ? $nameParts : [])) ?: 'Administrator';
         $password = (string) $this->secret('Passwort');
 
         if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
