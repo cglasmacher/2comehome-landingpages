@@ -13,6 +13,16 @@ class LeadProperty extends Model
         'features' => 'array',
     ];
 
+    public function getPropertyTypeLabelAttribute(): string
+    {
+        $type = trim((string) $this->property_type);
+
+        return (string) config(
+            'landingpages.property_types.'.$type.'.label',
+            $type !== '' ? ucfirst($type) : ''
+        );
+    }
+
     public function lead(): BelongsTo
     {
         return $this->belongsTo(Lead::class);
