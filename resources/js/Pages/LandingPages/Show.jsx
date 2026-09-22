@@ -5,7 +5,7 @@ import { ValuationForm } from '@/Components/ValuationForm';
 import Icon from '@/Components/ui/Icon';
 
 export default function Show() {
-    const { page, valuation, report_url, lead_summary, email_status } = usePage().props;
+    const { page, valuation, report_url, lead_summary, email_status, property_types = [] } = usePage().props;
     return (
         <>
             <Head title={page.seo?.title ?? page.title}>{page.seo?.description && <meta name="description" content={page.seo.description} />}</Head>
@@ -36,7 +36,7 @@ export default function Show() {
                                 </div>
                                 <p className="intro-footnote">Unverbindliche Orientierung – keine verbindliche Verkehrswertermittlung.</p>
                             </section>
-                            <section id="bewertung" className="form-panel"><ValuationForm action={route('landing-pages.leads.store', page.slug)} /></section>
+                            <section id="bewertung" className="form-panel"><ValuationForm action={route('landing-pages.leads.store', page.slug)} propertyTypes={property_types} /></section>
                         </div>
                     )}
                 </main>
