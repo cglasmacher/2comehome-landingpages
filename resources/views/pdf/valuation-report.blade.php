@@ -231,28 +231,37 @@
     <div class="valuation">
         <h2>{{ $isFinalReport ? 'Wertermittlung' : 'Ersteinschätzung' }}</h2>
 
-        @if($valuation?->range_low && $valuation?->range_high)
+        @if($isFinalReport)
             @if($valuation?->estimated_value)
                 <div class="valuation-value">
                     {{ number_format((float) $valuation->estimated_value, 0, ',', '.') }} €
                 </div>
-                <p class="valuation-range">
-                    {{ $isFinalReport ? 'Ermittelter Immobilienwert' : 'Orientierungswert' }}
-                </p>
+                <p class="valuation-range">Ermittelter Immobilienwert</p>
+            @else
+                <p>Eine abschließende Wertermittlung wurde noch nicht hinterlegt.</p>
             @endif
-
-            <table class="valuation-meta">
-                <tr>
-                    <td class="label">Bewertungsspanne</td>
-                    <td>
-                        {{ number_format((float) $valuation->range_low, 0, ',', '.') }} €
-                        bis
-                        {{ number_format((float) $valuation->range_high, 0, ',', '.') }} €
-                    </td>
-                </tr>
-            </table>
         @else
-            <p>Eine Bewertung konnte noch nicht berechnet werden.</p>
+            @if($valuation?->range_low && $valuation?->range_high)
+                @if($valuation?->estimated_value)
+                    <div class="valuation-value">
+                        {{ number_format((float) $valuation->estimated_value, 0, ',', '.') }} €
+                    </div>
+                    <p class="valuation-range">Orientierungswert</p>
+                @endif
+
+                <table class="valuation-meta">
+                    <tr>
+                        <td class="label">Bewertungsspanne</td>
+                        <td>
+                            {{ number_format((float) $valuation->range_low, 0, ',', '.') }} €
+                            bis
+                            {{ number_format((float) $valuation->range_high, 0, ',', '.') }} €
+                        </td>
+                    </tr>
+                </table>
+            @else
+                <p>Eine Bewertung konnte noch nicht berechnet werden.</p>
+            @endif
         @endif
     </div>
 
