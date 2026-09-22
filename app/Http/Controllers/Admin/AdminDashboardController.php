@@ -15,7 +15,7 @@ class AdminDashboardController extends Controller
         $search = trim((string) $request->query('search'));
 
         $leads = Lead::query()
-            ->with(['landingPage:id,slug,title', 'property', 'valuation'])
+            ->with(['landingPage:id,slug,title', 'property', 'valuation', 'latestOnOfficeSync'])
             ->when($search !== '', function ($query) use ($search): void {
                 $query->where(function ($query) use ($search): void {
                     $query->where('first_name', 'like', '%'.$search.'%')
@@ -26,6 +26,13 @@ class AdminDashboardController extends Controller
                             $query->where('street', 'like', '%'.$search.'%')
                                 ->orWhere('city', 'like', '%'.$search.'%')
                                 ->orWhere('zip', 'like', '%'.$search.'%');
+                        })
+                        ->orWhereHas('syncLogs', function ($query) use ($search): void {
+                            $query->where('provider', 'onoffice')
+                                ->where(function ($query) use ($search): void {
+                                    $query->where('external_contact_id', 'like', '%'.$search.'%')
+                                        ->orWhere('external_estate_id', 'like', '%'.$search.'%');
+                                });
                         });
                 });
             })
@@ -52,6 +59,10 @@ class AdminDashboardController extends Controller
                     $lead->property?->zip,
                     $lead->property?->city,
                 ]))),
+            ],
+            'onoffice' => [
+                'contact_id' => $lead->latestOnOfficeSync?->external_contact_id,
+                'estate_id' => $lead->latestOnOfficeSync?->external_estate_id,
             ],
             'valuation' => [
                 'estimated_value' => $lead->valuation?->estimated_value,
