@@ -29,6 +29,7 @@ class Valuation extends Model
             'somantic' => 'Somantic',
             'pricehubble' => 'PriceHubble',
             'formula' => 'Formelbasierte Orientierung',
+            'manual' => 'Manuell bearbeitet',
             default => 'Keine automatische Bewertung',
         };
     }
