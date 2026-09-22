@@ -43,8 +43,8 @@ class AdminLeadController extends Controller
                     'rooms' => $lead->property?->rooms,
                 ],
                 'onoffice' => [
-                    'contact_id' => $lead->latestOnOfficeSync?->external_contact_id,
-                    'estate_id' => $lead->latestOnOfficeSync?->external_estate_id,
+                    'kdnr' => $lead->latestOnOfficeSync?->onoffice_kdnr,
+                    'immonr' => $lead->latestOnOfficeSync?->onoffice_immonr,
                     'sync_status' => $lead->latestOnOfficeSync?->status,
                     'synced_at' => $lead->latestOnOfficeSync?->created_at?->format('d.m.Y H:i'),
                 ],
