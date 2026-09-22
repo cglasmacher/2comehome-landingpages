@@ -47,7 +47,7 @@
                                     </td>
                                     <td valign="top" width="50%" style="padding:0 0 14px 12px;">
                                         <p style="margin:0 0 4px; color:#6B7280; font-size:11px; font-weight:bold; letter-spacing:1px; text-transform:uppercase;">Immobilie</p>
-                                        <p style="margin:0; color:#2D2D2D; font-size:14px; line-height:1.5;">{{ $lead->property?->property_type ?: '—' }}<br>{{ trim(($lead->property?->street ?? '') . ' ' . ($lead->property?->house_number ?? '')) ?: '—' }}<br>{{ trim(($lead->property?->zip ?? '') . ' ' . ($lead->property?->city ?? '')) ?: '—' }}</p>
+                                        <p style="margin:0; color:#2D2D2D; font-size:14px; line-height:1.5;">{{ $lead->property?->property_type_label ?: '—' }}<br>{{ trim(($lead->property?->street ?? '') . ' ' . ($lead->property?->house_number ?? '')) ?: '—' }}<br>{{ trim(($lead->property?->zip ?? '') . ' ' . ($lead->property?->city ?? '')) ?: '—' }}</p>
                                     </td>
                                 </tr>
                                 <tr>
