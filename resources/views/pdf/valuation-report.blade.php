@@ -11,6 +11,7 @@
         h2 { font-size: 18px; margin-bottom: 6px; color: #2D2D2D; }
         .logo { max-width: 150px; margin-bottom: 20px; }
         .range { font-size: 22px; font-weight: bold; color: #C84C3D; }
+        .map { width: 100%; margin-top: 10px; border-radius: 6px; }
     </style>
 </head>
 <body>
@@ -45,6 +46,14 @@
             <p>Eine Bewertung konnte noch nicht berechnet werden.</p>
         @endif
     </div>
+
+    @if($mapImage)
+        <div class="box">
+            <h2>Lage Ihrer Immobilie</h2>
+            <p class="muted">{{ $property?->street }} {{ $property?->house_number }}, {{ $property?->zip }} {{ $property?->city }}</p>
+            <img src="{{ $mapImage }}" alt="Lage der Immobilie" class="map">
+        </div>
+    @endif
 
     <p class="muted">Hinweis: Diese Bewertung ist eine automatisierte Ersteinschätzung und keine verbindliche Verkehrswertermittlung.</p>
 </body>
