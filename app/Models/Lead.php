@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Str;
 
@@ -39,5 +40,17 @@ class Lead extends Model
     public function valuation(): HasOne
     {
         return $this->hasOne(Valuation::class);
+    }
+
+    public function syncLogs(): HasMany
+    {
+        return $this->hasMany(LeadSyncLog::class);
+    }
+
+    public function latestOnOfficeSync(): HasOne
+    {
+        return $this->hasOne(LeadSyncLog::class)
+            ->where('provider', 'onoffice')
+            ->latestOfMany();
     }
 }
