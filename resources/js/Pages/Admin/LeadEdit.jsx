@@ -86,19 +86,19 @@ export default function LeadEdit({ lead }) {
                     <form onSubmit={submit} className="space-y-5">
                         <div>
                             <label htmlFor="estimated_value" className="mb-2 block text-xs font-semibold text-[#525851]">Schätzwert / Orientierungswert (€)</label>
-                            <input id="estimated_value" type="number" min="1" step="100" value={data.estimated_value} onChange={(e) => setData('estimated_value', e.target.value)} className="w-full rounded-md border border-[#d8d5cd] px-3 py-3 text-base" required />
+                            <input id="estimated_value" type="number" min="1" step="any" value={data.estimated_value} onChange={(e) => setData('estimated_value', e.target.value)} className="w-full rounded-md border border-[#d8d5cd] px-3 py-3 text-base" required />
                             {errors.estimated_value && <p className="mt-2 text-xs text-[#a02f27]">{errors.estimated_value}</p>}
                         </div>
 
                         <div className="grid gap-4 sm:grid-cols-2">
                             <div>
                                 <label htmlFor="range_low" className="mb-2 block text-xs font-semibold text-[#525851]">Spanne von (€)</label>
-                                <input id="range_low" type="number" min="1" step="100" value={data.range_low} onChange={(e) => setData('range_low', e.target.value)} className="w-full rounded-md border border-[#d8d5cd] px-3 py-3 text-base" required />
+                                <input id="range_low" type="number" min="1" step="any" value={data.range_low} onChange={(e) => setData('range_low', e.target.value)} className="w-full rounded-md border border-[#d8d5cd] px-3 py-3 text-base" required />
                                 {errors.range_low && <p className="mt-2 text-xs text-[#a02f27]">{errors.range_low}</p>}
                             </div>
                             <div>
                                 <label htmlFor="range_high" className="mb-2 block text-xs font-semibold text-[#525851]">Spanne bis (€)</label>
-                                <input id="range_high" type="number" min="1" step="100" value={data.range_high} onChange={(e) => setData('range_high', e.target.value)} className="w-full rounded-md border border-[#d8d5cd] px-3 py-3 text-base" required />
+                                <input id="range_high" type="number" min="1" step="any" value={data.range_high} onChange={(e) => setData('range_high', e.target.value)} className="w-full rounded-md border border-[#d8d5cd] px-3 py-3 text-base" required />
                                 {errors.range_high && <p className="mt-2 text-xs text-[#a02f27]">{errors.range_high}</p>}
                             </div>
                         </div>
