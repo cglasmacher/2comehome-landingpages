@@ -29,7 +29,7 @@ export default function Dashboard({ leads, filters }) {
                     <input
                         value={search}
                         onChange={(event) => setSearch(event.target.value)}
-                        placeholder="Name, E-Mail, Ort, Straße, onOffice-ID …"
+                        placeholder="Name, E-Mail, Ort, Straße, KdNr, ImmoNr …"
                         className="min-w-0 flex-1 rounded-md border border-[#d7d4cc] bg-white px-3 py-2.5 text-sm"
                     />
                     <button className="rounded-md bg-[#172741] px-4 py-2.5 text-sm font-semibold text-white">Suchen</button>
@@ -72,8 +72,8 @@ export default function Dashboard({ leads, filters }) {
                                     </td>
                                     <td className="px-5 py-4 align-top text-xs text-[#666b65]">{lead.valuation.source_label || '—'}</td>
                                     <td className="px-5 py-4 align-top text-xs text-[#666b65]">
-                                        <div><span className="text-[#9a9c95]">Kontakt:</span> {lead.onoffice?.contact_id || '—'}</div>
-                                        <div className="mt-1"><span className="text-[#9a9c95]">Immobilie:</span> {lead.onoffice?.estate_id || '—'}</div>
+                                        <div><span className="text-[#9a9c95]">KdNr:</span> {lead.onoffice?.kdnr || '—'}</div>
+                                        <div className="mt-1"><span className="text-[#9a9c95]">ImmoNr:</span> {lead.onoffice?.immonr || '—'}</div>
                                     </td>
                                     <td className="px-5 py-4 text-right align-top">
                                         <Link href={lead.edit_url} className="inline-flex rounded-md border border-[#cfcac0] px-3 py-2 text-xs font-semibold text-[#172741] hover:bg-[#f4f2ed]">
