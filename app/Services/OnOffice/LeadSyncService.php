@@ -50,12 +50,48 @@ class LeadSyncService
         $stage = 'contact';
         try {
             Log::info('onOffice lead sync started', ['lead_id' => $lead->id]);
-            $contactResponse = $this->client->createContactWithRemark($contactPayload, $remark);
-            $contactId = data_get($contactResponse, 'external_contact_id');
 
-            if (! $this->isSuccessful($contactResponse) || ! filled($contactId)) {
-                return $this->finish($lead, 'failed', $contactId, null, $requestPayload, $contactResponse, $estateResponse, $relationResponse, $this->responseError($contactResponse) ?? 'onOffice contact ID was not returned.');
+            $lookupResponse = $this->client->findLatestContactByEmail((string) $lead->email);
+            if (! $this->isSuccessful($lookupResponse)) {
+                return $this->finish($lead, 'failed', null, null, $requestPayload, $lookupResponse, $estateResponse, $relationResponse, $this->responseError($lookupResponse) ?? 'onOffice contact lookup failed.');
             }
+
+            $contactId = data_get($lookupResponse, 'external_contact_id');
+            if (filled($contactId)) {
+                $contactTypes = array_values(array_filter((array) data_get($lookupResponse, 'contact_types', [])));
+                $isOwner = collect($contactTypes)->contains(
+                    fn ($type) => mb_strtolower(trim((string) $type), 'UTF-8') === 'eigentümer'
+                );
+
+                $estateNote .= "\nVorhandener Kontakt aus Datenbank";
+                if (! $isOwner) {
+                    $status = $contactTypes !== [] ? implode(', ', $contactTypes) : 'ohne Eigentümer-Status';
+                    $estateNote .= "\nACHTUNG: Aktuell als ".$status." geführt";
+                }
+
+                $contactResponse = array_merge($lookupResponse, [
+                    'existing_contact' => true,
+                    'selected_contact_id' => (string) $contactId,
+                ]);
+
+                Log::info('onOffice existing contact selected', [
+                    'lead_id' => $lead->id,
+                    'email' => $lead->email,
+                    'contact_ids' => data_get($lookupResponse, 'matches', []),
+                    'selected_contact_id' => $contactId,
+                    'contact_types' => $contactTypes,
+                    'is_owner' => $isOwner,
+                ]);
+            } else {
+                $contactResponse = $this->client->createContactWithRemark($contactPayload, $remark);
+                $contactId = data_get($contactResponse, 'external_contact_id');
+
+                if (! $this->isSuccessful($contactResponse) || ! filled($contactId)) {
+                    return $this->finish($lead, 'failed', $contactId, null, $requestPayload, $contactResponse, $estateResponse, $relationResponse, $this->responseError($contactResponse) ?? 'onOffice contact ID was not returned.');
+                }
+            }
+
+            $requestPayload['estate']['internal_note'] = $estateNote;
 
             $stage = 'estate';
             $estateResponse = $this->client->createEstate($propertyPayload, $estateNote);
