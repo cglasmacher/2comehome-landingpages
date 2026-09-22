@@ -2,19 +2,19 @@ import { cn } from '@/lib/utils';
 
 const steps = [
     {
-        number: '01',
-        title: 'Daten eingeben',
-        description: 'und Kontaktaufnahme',
+        number: '1',
+        title: 'Eingabe Ihrer Daten',
+        description: 'Wir verarbeiten Ihre Daten sicher und vertraulich.',
     },
     {
-        number: '02',
-        title: 'Einwertung',
-        description: 'und Vermarktung',
+        number: '2',
+        title: 'unverbindliche Erstbewertung',
+        description: 'Wir führen eine automatisierte Ersteinschätzung Ihrer Immobilie durch.',
     },
     {
-        number: '03',
-        title: 'Notar',
-        description: 'und alle glücklich',
+        number: '3',
+        title: 'Professionelle und diskrete Vermarktung',
+        description: 'Wir vermarkten Ihre Immobilie professionell und diskret, sodass alle Beteiligten zufrieden sind.',
     },
 ];
 

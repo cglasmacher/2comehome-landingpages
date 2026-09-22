@@ -14,7 +14,7 @@ export default function ValuationRange({ valuation, reportUrl }) {
             <div className="mt-5 h-px w-20 bg-(--color-accent)" />
             <p className="mt-4 text-sm leading-6 text-(--color-muted)">
                 {hasRange
-                    ? 'Die Range basiert auf einer automatisierten PriceHubble-Ersteinschätzung und ersetzt keine persönliche Marktanalyse.'
+                    ? 'Die Range basiert auf einer automatisierten Ersteinschätzung und ersetzt keine persönliche Marktanalyse.'
                     : 'Die automatische Einwertung konnte nicht abschließend geladen werden. Unser Team übernimmt die Prüfung persönlich.'}
             </p>
 

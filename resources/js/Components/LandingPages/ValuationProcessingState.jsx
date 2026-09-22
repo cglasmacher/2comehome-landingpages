@@ -45,7 +45,7 @@ export default function ValuationProcessingState({ isProcessing }) {
                 <div className="min-w-0 flex-1">
                     <p className="text-sm font-semibold text-(--color-secondary)">Ihre Immobilie wird gerade eingeordnet</p>
                     <p className="mt-1 text-sm leading-5 text-(--color-muted)">
-                        PriceHubble prüft die Angaben. Einen Moment bitte – anschließend werden Sie direkt zur Ergebnisseite weitergeleitet.
+                        Unser System verarbeitet Ihre Angaben. Einen Moment bitte – anschließend werden Sie direkt zur Ergebnisseite weitergeleitet.
                     </p>
                 </div>
                 <time className="shrink-0 font-mono text-lg font-semibold tabular-nums text-(--color-secondary)" dateTime={`PT${elapsedSeconds}S`}>
