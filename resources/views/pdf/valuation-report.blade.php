@@ -165,6 +165,67 @@
             color: #0B2D48;
             font-weight: 400;
         }
+
+        .cta-page {
+            padding-top: 4mm;
+        }
+
+        .cta-page h1 {
+            text-align: left;
+            margin-top: 8px;
+            margin-bottom: 16px;
+        }
+
+        .cta-lead {
+            color: #0B2D48;
+            font-size: 13pt;
+            line-height: 1.5;
+            margin: 0 0 16px;
+        }
+
+        .cta-copy {
+            font-size: 10.5pt;
+            line-height: 1.55;
+            margin: 0 0 14px;
+        }
+
+        .cta-list-title {
+            color: #0B2D48;
+            font-size: 11pt;
+            font-weight: 700;
+            margin: 20px 0 10px;
+        }
+
+        .cta-list {
+            margin: 0;
+            padding-left: 18px;
+        }
+
+        .cta-list li {
+            margin: 0 0 7px;
+            padding-left: 3px;
+        }
+
+        .cta-box {
+            margin-top: 24px;
+            padding: 17px 18px 16px;
+            border: 1px solid #0B2D48;
+        }
+
+        .cta-box-title {
+            color: #0B2D48;
+            font-size: 15pt;
+            font-weight: 700;
+            line-height: 1.35;
+            margin: 0;
+        }
+
+        .cta-contact {
+            margin-top: 10px;
+            font-size: 9.8pt;
+            color: #666666;
+            line-height: 1.5;
+        }
     </style>
 </head>
 <body>
@@ -310,5 +371,56 @@
             @endif
         </p>
     @endif
+    @if(! $isFinalReport)
+        <div class="page-break"></div>
+
+        <div class="cta-page">
+            <div class="header">
+                <img src="{{ public_path('images/logo-2comehome.png') }}" alt="2 COME HOME Immobilien" class="logo">
+            </div>
+
+            <h1>Wie kann es jetzt weitergehen?</h1>
+
+            <p class="cta-lead">
+                Die erste Einschätzung zeigt Ihnen, in welchem Bereich sich der Wert Ihrer Immobilie bewegt.
+                Für eine konkrete Einwertung brauchen wir jetzt noch die entscheidenden Details.
+            </p>
+
+            <p class="cta-copy">
+                Dazu gehören unter anderem Unterlagen zum Objekt, Angaben zu Zustand und Modernisierungen,
+                Besonderheiten der Immobilie sowie weitere Informationen, die sich nicht vollständig über
+                die Landingpage erfassen lassen.
+            </p>
+
+            <p class="cta-copy">
+                <strong class="navy">Im nächsten Schritt prüfen wir die Immobilie deshalb im Detail und
+                vervollständigen die Bewertung gemeinsam mit Ihnen.</strong>
+            </p>
+
+            <p class="cta-list-title">Was wir dafür noch brauchen:</p>
+
+            <ul class="cta-list">
+                <li>Grundrisse und Flächenangaben</li>
+                <li>Baujahr und Modernisierungen</li>
+                <li>Angaben zu Heizung, Dach, Fenstern und technischer Ausstattung</li>
+                <li>Informationen zu Zustand und Ausstattung</li>
+                <li>Grundbuch- und Grundstücksdaten</li>
+                <li>Teilungserklärung und relevante Objektunterlagen, falls vorhanden</li>
+                <li>Angaben zu Mietverhältnissen, Belastungen oder Besonderheiten</li>
+                <li>Fotos bzw. persönlicher Eindruck vor Ort</li>
+            </ul>
+
+            <div class="cta-box">
+                <p class="cta-box-title">
+                    Lassen Sie uns jetzt aus der Schätzung eine konkrete Einwertung machen.
+                </p>
+                <p class="cta-contact">
+                    2 COME HOME Immobilien · Markt 14-16 · 40721 Hilden<br>
+                    Telefon: +49 176 64845045 · c.glasmacher@2comehome.de
+                </p>
+            </div>
+        </div>
+    @endif
+
 </body>
 </html>
