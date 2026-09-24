@@ -414,10 +414,6 @@
                 <p class="cta-box-title">
                     Lassen Sie uns jetzt aus der Schätzung eine konkrete Einwertung machen.
                 </p>
-                <p class="cta-contact">
-                    2 COME HOME Immobilien · Markt 14-16 · 40721 Hilden<br>
-                    Telefon: +49 176 64845045 · c.glasmacher@2comehome.de
-                </p>
             </div>
         </div>
     @endif
