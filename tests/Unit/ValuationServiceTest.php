@@ -21,13 +21,14 @@ class ValuationServiceTest extends TestCase
         config()->set('valuation.providers.pricehubble.base_url', null);
     }
 
-    private function lead(): Lead
+    private function lead(string $propertyType = 'einfamilienhaus'): Lead
     {
         $lead = new Lead(['first_name' => 'Private', 'email' => 'private@example.test']);
         $lead->setRelation('property', new LeadProperty([
-            'property_type' => 'einfamilienhaus', 'street' => 'Eschenweg', 'house_number' => '39',
+            'property_type' => $propertyType, 'street' => 'Eschenweg', 'house_number' => '39',
             'zip' => '40723', 'city' => 'Hilden', 'country' => 'DE',
             'living_area' => 100, 'plot_area' => 500, 'construction_year' => 1964, 'rooms' => 4,
+            'number_of_units' => $propertyType === 'mehrfamilienhaus' ? 8 : null,
         ]));
 
         return $lead;
@@ -83,16 +84,63 @@ class ValuationServiceTest extends TestCase
         Http::assertNothingSent();
     }
 
-    public function test_pricehubble_remains_selectable_and_never_silently_uses_formula(): void
+    public function test_pricehubble_uses_official_multifamily_payload_and_provider_range(): void
     {
         config()->set('valuation.order', ['pricehubble', 'formula']);
         config()->set('valuation.providers.pricehubble.base_url', 'https://pricehubble.test');
         config()->set('valuation.providers.pricehubble.api_key', 'ph-test-key');
-        Http::fake(['https://pricehubble.test/valuations' => Http::response(['estimated_value' => 600000])]);
-        $result = app(ValuationService::class)->createForLead($this->lead(), 10);
+        Http::fake(['https://pricehubble.test/valuation/property_value' => Http::response([
+            'valuations' => [[[
+                'salePrice' => 600000,
+                'salePriceRange' => ['lower' => 550000, 'upper' => 650000],
+                'currency' => 'EUR',
+            ]]],
+        ])]);
+
+        $result = app(ValuationService::class)->createForLead($this->lead('mehrfamilienhaus'), 10);
+
         $this->assertSame('pricehubble', $result->provider);
-        $this->assertSame(540000.0, $result->rangeLow);
+        $this->assertSame(600000.0, $result->estimatedValue);
+        $this->assertSame(550000.0, $result->rangeLow);
+        $this->assertSame(650000.0, $result->rangeHigh);
+        $this->assertSame('provider', $result->rawResponse['range_source']);
         Http::assertSentCount(1);
+        Http::assertSent(function ($request): bool {
+            $data = $request->data();
+            $property = data_get($data, 'valuationInputs.0.property', []);
+
+            return $request->url() === 'https://pricehubble.test/valuation/property_value'
+                && $request->hasHeader('Authorization', 'Bearer ph-test-key')
+                && data_get($data, 'dealType') === 'sale'
+                && data_get($property, 'propertyType.code') === 'multi_family_house'
+                && data_get($property, 'numberOfUnits') === 8
+                && (float) data_get($property, 'livingArea') === 100.0
+                && ! array_key_exists('numberOfRooms', $property)
+                && data_get($data, 'countryCode') === 'DE';
+        });
+    }
+
+    public function test_formula_does_not_apply_single_home_room_bonus_to_multifamily_house(): void
+    {
+        config()->set('valuation.order', ['formula']);
+        $lead = $this->lead('mehrfamilienhaus');
+        $lead->property->rooms = 12;
+
+        $result = app(ValuationService::class)->createForLead($lead, 10);
+
+        $this->assertSame('formula', $result->provider);
+        $this->assertSame(425000.0, $result->estimatedValue);
+    }
+
+    public function test_legacy_maisonette_is_not_valuated_as_a_new_property_type(): void
+    {
+        $result = app(ValuationService::class)->createForLead($this->lead('maisonette'), 10);
+
+        $this->assertSame('failed', $result->status);
+        $this->assertSame('unsupported_property', $result->rawResponse['attempts'][0]['reason']);
+        $this->assertSame('not_configured', $result->rawResponse['attempts'][1]['reason']);
+        $this->assertSame('unsupported_property', $result->rawResponse['attempts'][2]['reason']);
+        Http::assertNothingSent();
     }
 
     public function test_single_provider_mode_fails_without_an_implicit_formula(): void
