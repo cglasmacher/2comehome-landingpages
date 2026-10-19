@@ -13,7 +13,8 @@
 {{ $lead->property?->street }} {{ $lead->property?->house_number }}<br>
 {{ $lead->property?->zip }} {{ $lead->property?->city }}<br>
 Wohnfläche: {{ $lead->property?->living_area ?? '–' }} m² · Grundstück: {{ $lead->property?->plot_area ?? '–' }} m²<br>
-Baujahr: {{ $lead->property?->construction_year ?? '–' }} · Zimmer: {{ $lead->property?->rooms ?? '–' }}</p>
+Baujahr: {{ $lead->property?->construction_year ?? '–' }} · Zimmer: {{ $lead->property?->rooms ?? '–' }}
+@if($lead->property?->number_of_units)<br>Wohneinheiten: {{ $lead->property->number_of_units }}@endif</p>
 <h2 style="font-size:18px">Ersteinschätzung</h2>
 <p>Bewertungsquelle: {{ $lead->valuation?->source_label }}</p>
 @if($lead->valuation?->range_low && $lead->valuation?->range_high)
