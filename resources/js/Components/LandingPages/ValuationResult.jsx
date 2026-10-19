@@ -3,7 +3,6 @@ import { CalendlyModal, safeCalendlyUrl } from '@/Components/CalendlyModal';
 import Icon from '@/Components/ui/Icon';
 import { formatCurrency } from '@/lib/utils';
 
-
 export default function ValuationResult({ valuation, summary, reportUrl, calendlyUrl, emailStatus }) {
     const [bookingOpen, setBookingOpen] = useState(false);
     const contact = summary?.contact ?? {};
@@ -15,6 +14,7 @@ export default function ValuationResult({ valuation, summary, reportUrl, calendl
         ['Immobilienart', property.property_type_label ?? property.property_type],
         ['Wohnfläche', property.living_area ? property.living_area + ' m²' : null],
         ['Grundstück', property.plot_area ? property.plot_area + ' m²' : null],
+        ['Wohneinheiten', property.number_of_units],
         ['Baujahr', property.construction_year],
         ['Zimmer', property.rooms],
     ];

@@ -134,6 +134,7 @@ class LeadSyncService
             'living_area' => $property?->living_area,
             'plot_area' => $property?->plot_area,
             'rooms' => $property?->rooms,
+            'number_of_units' => $property?->number_of_units,
             'description' => $this->buildEstateDescription($lead),
             'valuation' => $this->isDemoValuation($lead) || ! in_array($lead->valuation?->provider, config('valuation.onoffice_price_fields_providers', ['pricehubble']), true) ? [] : $this->estateValuation($lead),
         ], static fn ($value) => $value !== null && $value !== '');
@@ -173,6 +174,11 @@ class LeadSyncService
             // onOffice descriptions can be rendered as HTML. Treat visitor input as text.
             $parts[] = "Nachricht des Interessenten:\n".htmlspecialchars($notes, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
         }
+
+        if ($lead->property?->number_of_units) {
+            $parts[] = 'Wohneinheiten: '.(int) $lead->property->number_of_units;
+        }
+
         $valuation = $this->estateValuation($lead);
         if ($valuation !== []) {
             $demo = $this->isDemoValuation($lead);
@@ -194,11 +200,12 @@ class LeadSyncService
     {
         $property = $lead->property;
         $valuation = $lead->valuation;
+        $unitLine = $property?->number_of_units ? "\nWohneinheiten: ".(int) $property->number_of_units : '';
 
         return trim(sprintf(
-            "Lead aus Landingpage %s\n\nObjekt: %s %s, %s %s\nTyp: %s\nWohnfläche: %s m²\nGrundstück: %s m²\nBaujahr: %s\nZimmer: %s\n\nImmobilien-Ersteinschätzung:\nSchätzwert: %s EUR\nRange: %s EUR bis %s EUR\nKonfigurierter Ersatz-Spannenprozentsatz: %s %%\nStatus: %s\n\nTelefonische Kontaktaufnahme erlaubt: %s\n\nNotiz des Nutzers:\n%s",
+            "Lead aus Landingpage %s\n\nObjekt: %s %s, %s %s\nTyp: %s\nWohnfläche: %s m²\nGrundstück: %s m²\nBaujahr: %s\nZimmer: %s%s\n\nImmobilien-Ersteinschätzung:\nSchätzwert: %s EUR\nRange: %s EUR bis %s EUR\nKonfigurierter Ersatz-Spannenprozentsatz: %s %%\nStatus: %s\n\nTelefonische Kontaktaufnahme erlaubt: %s\n\nNotiz des Nutzers:\n%s",
             $lead->landingPage->slug, $property?->street, $property?->house_number, $property?->zip, $property?->city,
-            $property?->property_type, $property?->living_area, $property?->plot_area, $property?->construction_year, $property?->rooms,
+            $property?->property_type, $property?->living_area, $property?->plot_area, $property?->construction_year, $property?->rooms, $unitLine,
             $valuation?->estimated_value ? number_format((float) $valuation->estimated_value, 0, ',', '.') : 'nicht verfügbar',
             $valuation?->range_low ? number_format((float) $valuation->range_low, 0, ',', '.') : 'nicht verfügbar',
             $valuation?->range_high ? number_format((float) $valuation->range_high, 0, ',', '.') : 'nicht verfügbar',

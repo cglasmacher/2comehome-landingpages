@@ -46,34 +46,22 @@ export default function LeadEdit({ lead }) {
                     <div className="rounded-lg border border-[#d9d5cc] bg-white p-3 shadow-sm">
                         <div className="mb-2 text-[10px] font-semibold uppercase tracking-[.12em] text-[#8a8d85]">Ersteinschätzung</div>
                         <div className="flex flex-wrap gap-2">
-                            <a href={lead.pdf_preview_url} target="_blank" rel="noreferrer" className="rounded-md border border-[#172741] px-3 py-2 text-xs font-semibold text-[#172741] hover:bg-[#f7f7f5]">
-                                Ansehen
-                            </a>
-                            <a href={lead.pdf_download_url} className="rounded-md bg-[#172741] px-3 py-2 text-xs font-semibold text-white hover:bg-[#223a5e]">
-                                Download
-                            </a>
+                            <a href={lead.pdf_preview_url} target="_blank" rel="noreferrer" className="rounded-md border border-[#172741] px-3 py-2 text-xs font-semibold text-[#172741] hover:bg-[#f7f7f5]">Ansehen</a>
+                            <a href={lead.pdf_download_url} className="rounded-md bg-[#172741] px-3 py-2 text-xs font-semibold text-white hover:bg-[#223a5e]">Download</a>
                         </div>
                     </div>
 
                     <div className="rounded-lg border border-[#d9d5cc] bg-white p-3 shadow-sm">
                         <div className="mb-2 text-[10px] font-semibold uppercase tracking-[.12em] text-[#a24a3d]">Abschließende Wertermittlung</div>
                         <div className="flex flex-wrap gap-2">
-                            <a href={lead.final_pdf_preview_url} target="_blank" rel="noreferrer" className="rounded-md border border-[#b44637] px-3 py-2 text-xs font-semibold text-[#a23b2e] hover:bg-[#fcf5f1]">
-                                Ansehen
-                            </a>
-                            <a href={lead.final_pdf_download_url} className="rounded-md bg-[#b44637] px-3 py-2 text-xs font-semibold text-white hover:bg-[#963b2f]">
-                                Download
-                            </a>
+                            <a href={lead.final_pdf_preview_url} target="_blank" rel="noreferrer" className="rounded-md border border-[#b44637] px-3 py-2 text-xs font-semibold text-[#a23b2e] hover:bg-[#fcf5f1]">Ansehen</a>
+                            <a href={lead.final_pdf_download_url} className="rounded-md bg-[#b44637] px-3 py-2 text-xs font-semibold text-white hover:bg-[#963b2f]">Download</a>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {flash?.success && (
-                <div className="mb-6 rounded-lg border border-[#b9d1b9] bg-[#f0f7ef] px-4 py-3 text-sm text-[#426145]">
-                    {flash.success}
-                </div>
-            )}
+            {flash?.success && <div className="mb-6 rounded-lg border border-[#b9d1b9] bg-[#f0f7ef] px-4 py-3 text-sm text-[#426145]">{flash.success}</div>}
 
             <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(340px,.65fr)]">
                 <section className="rounded-xl border border-[#ddd9d0] bg-white p-6 shadow-sm">
@@ -113,10 +101,7 @@ export default function LeadEdit({ lead }) {
                     <section className="rounded-xl border border-[#ddd9d0] bg-white p-6 shadow-sm">
                         <p className="text-[10px] font-semibold uppercase tracking-[.15em] text-[#8b8d86]">Aktueller Stand</p>
                         <dl className="mt-5 space-y-4">
-                            <div>
-                                <dt className="text-[11px] text-[#8a8d85]">Orientierungswert</dt>
-                                <dd className="mt-1 text-xl font-semibold text-[#172741]">{money(valuation.estimated_value)}</dd>
-                            </div>
+                            <div><dt className="text-[11px] text-[#8a8d85]">Orientierungswert</dt><dd className="mt-1 text-xl font-semibold text-[#172741]">{money(valuation.estimated_value)}</dd></div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div><dt className="text-[11px] text-[#8a8d85]">Von</dt><dd className="mt-1 text-sm font-semibold">{money(valuation.range_low)}</dd></div>
                                 <div><dt className="text-[11px] text-[#8a8d85]">Bis</dt><dd className="mt-1 text-sm font-semibold">{money(valuation.range_high)}</dd></div>
@@ -132,14 +117,11 @@ export default function LeadEdit({ lead }) {
                             <div><span className="block text-[11px] text-[#8a8d85]">Kontakt</span><span className="mt-1 block">{lead.email || '—'}<br />{lead.phone || '—'}</span></div>
                             <div>
                                 <span className="block text-[11px] text-[#8a8d85]">onOffice</span>
-                                <span className="mt-1 block leading-6">
-                                    KdNr: <strong className="font-semibold text-[#172741]">{lead.onoffice?.kdnr || '—'}</strong><br />
-                                    ImmoNr: <strong className="font-semibold text-[#172741]">{lead.onoffice?.immonr || '—'}</strong>
-                                </span>
+                                <span className="mt-1 block leading-6">KdNr: <strong className="font-semibold text-[#172741]">{lead.onoffice?.kdnr || '—'}</strong><br />ImmoNr: <strong className="font-semibold text-[#172741]">{lead.onoffice?.immonr || '—'}</strong></span>
                                 {lead.onoffice?.synced_at && <span className="mt-1 block text-[11px] text-[#9a9c95]">Letzter Sync: {lead.onoffice.synced_at}</span>}
                             </div>
                             <div><span className="block text-[11px] text-[#8a8d85]">Objekt</span><span className="mt-1 block">{lead.property?.property_type_label || '—'}<br />{address || '—'}</span></div>
-                            <div><span className="block text-[11px] text-[#8a8d85]">Eckdaten</span><span className="mt-1 block">Wohnfläche: {lead.property?.living_area || '—'} m²<br />Grundstück: {lead.property?.plot_area || '—'} m²<br />Baujahr: {lead.property?.construction_year || '—'} · Zimmer: {lead.property?.rooms || '—'}</span></div>
+                            <div><span className="block text-[11px] text-[#8a8d85]">Eckdaten</span><span className="mt-1 block">Wohnfläche: {lead.property?.living_area || '—'} m²<br />Grundstück: {lead.property?.plot_area || '—'} m²<br />Baujahr: {lead.property?.construction_year || '—'} · Zimmer: {lead.property?.rooms || '—'}{lead.property?.number_of_units ? <><br />Wohneinheiten: {lead.property.number_of_units}</> : null}</span></div>
                             {lead.notes && <div><span className="block text-[11px] text-[#8a8d85]">Notiz</span><span className="mt-1 block whitespace-pre-wrap leading-6">{lead.notes}</span></div>}
                         </div>
                     </section>

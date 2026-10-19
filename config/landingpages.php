@@ -11,31 +11,46 @@ return [
             'label' => 'Einfamilienhaus',
             'icon' => 'home',
             'somantic' => 'haus',
+            'pricehubble' => ['code' => 'house', 'subcode' => 'house_detached'],
             'onoffice' => ['objektart' => 'haus', 'objekttyp' => 'einfamilienhaus'],
         ],
         'doppelhaushälfte' => [
             'label' => 'Doppelhaushälfte',
             'icon' => 'home',
             'somantic' => 'haus',
+            'pricehubble' => ['code' => 'house', 'subcode' => 'house_semi_detached'],
             'onoffice' => ['objektart' => 'haus', 'objekttyp' => 'doppelhaushaelfte'],
         ],
         'reihenhaus' => [
             'label' => 'Reihenhaus',
             'icon' => 'home',
             'somantic' => 'haus',
+            // Corner vs. middle row house is unknown in the short form, so no PriceHubble subcode is assumed.
+            'pricehubble' => ['code' => 'house'],
             'onoffice' => ['objektart' => 'haus', 'objekttyp' => 'reihenhaus'],
         ],
         'wohnung' => [
             'label' => 'Wohnung',
             'icon' => 'building',
             'somantic' => 'wohnung',
+            'pricehubble' => ['code' => 'apartment', 'subcode' => 'apartment_normal'],
             'onoffice' => ['objektart' => 'wohnung'],
         ],
+        // Legacy only: old stored leads can still be synchronized to onOffice, but this type is no longer selectable or valuated.
         'maisonette' => [
             'label' => 'Maisonette',
             'icon' => 'building',
+            'selectable' => false,
             'somantic' => 'wohnung',
+            'pricehubble' => ['code' => 'apartment', 'subcode' => 'apartment_maisonette'],
             'onoffice' => ['objektart' => 'wohnung', 'objekttyp' => 'maisonette'],
+        ],
+        'mehrfamilienhaus' => [
+            'label' => 'Mehrfamilienhaus',
+            'icon' => 'building',
+            // Do not downgrade MFH to a generic house valuation. PriceHubble has a dedicated MFH model.
+            'pricehubble' => ['code' => 'multi_family_house'],
+            'onoffice' => ['objektart' => 'haus', 'objekttyp' => 'hausbau_mehrfamilienhaus'],
         ],
         'grundstück' => [
             'label' => 'Grundstück',

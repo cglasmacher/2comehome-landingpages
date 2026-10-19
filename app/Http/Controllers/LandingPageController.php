@@ -16,6 +16,7 @@ class LandingPageController extends Controller
         return Inertia::render('LandingPages/Show', [
             'page' => $renderer->renderPayload($landingPage),
             'property_types' => collect(config('landingpages.property_types', []))
+                ->filter(fn (array $type) => ($type['selectable'] ?? true) === true)
                 ->map(fn (array $type, string $value) => [
                     'value' => $value,
                     'label' => $type['label'] ?? ucfirst($value),

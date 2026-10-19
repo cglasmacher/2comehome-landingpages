@@ -1,5 +1,6 @@
 import { Head, usePage } from '@inertiajs/react';
 import { route } from 'ziggy-js';
+import MarketContextCard from '@/Components/LandingPages/MarketContextCard';
 import ValuationResult from '@/Components/LandingPages/ValuationResult';
 import { ValuationForm } from '@/Components/ValuationForm';
 import Icon from '@/Components/ui/Icon';
@@ -31,13 +32,20 @@ export default function Show() {
                                 </div>
                                 <div className="process-note">
                                     <h2>Ein guter Anfang für Ihre Entscheidung.</h2>
-                                    <ol><li><span>1</span> Eingabe Ihrer Daten</li><li><span>2</span> Unverbindliche Erstbewertung'</li><li><span>3</span> Gemeinsam die nächsten Schritte besprechen</li></ol>
+                                    <ol><li><span>1</span> Eingabe Ihrer Daten</li><li><span>2</span> Unverbindliche Erstbewertung</li><li><span>3</span> Gemeinsam die nächsten Schritte besprechen</li></ol>
                                 </div>
                                 <p className="intro-footnote">Unverbindliche Orientierung – keine verbindliche Verkehrswertermittlung.</p>
                             </section>
                             <section id="bewertung" className="form-panel"><ValuationForm action={route('landing-pages.leads.store', page.slug)} propertyTypes={property_types} /></section>
                         </div>
                     )}
+                    <MarketContextCard
+                        content={page.content?.market_card ?? {}}
+                        valuation={valuation}
+                        property={lead_summary?.property ?? {}}
+                        ctaHref={valuation ? '#rueckruf' : '#bewertung'}
+                        ctaLabel={valuation ? 'Persönliche Marktanalyse besprechen' : undefined}
+                    />
                 </main>
                 <footer className="site-footer"><div className="site-container footer-inner"><span>© {new Date().getFullYear()} 2 COME HOME Immobilien</span><span>Ihre Immobilie verdient persönliche Aufmerksamkeit.</span></div></footer>
             </div>
