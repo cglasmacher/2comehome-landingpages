@@ -48,8 +48,7 @@ return [
         'mehrfamilienhaus' => [
             'label' => 'Mehrfamilienhaus',
             'icon' => 'building',
-            // Somantic currently distinguishes house vs. apartment; MFH therefore uses the house route there.
-            'somantic' => 'haus',
+            // Do not downgrade MFH to a generic house valuation. PriceHubble has a dedicated MFH model.
             'pricehubble' => ['code' => 'multi_family_house'],
             'onoffice' => ['objektart' => 'haus', 'objekttyp' => 'hausbau_mehrfamilienhaus'],
         ],
