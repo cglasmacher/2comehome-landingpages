@@ -40,6 +40,7 @@ class AdminLeadController extends Controller
                     'living_area' => $lead->property?->living_area,
                     'plot_area' => $lead->property?->plot_area,
                     'rooms' => $lead->property?->rooms,
+                    'number_of_units' => $lead->property?->number_of_units,
                 ],
                 'onoffice' => [
                     'kdnr' => $lead->latestOnOfficeSync?->onoffice_kdnr,
