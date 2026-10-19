@@ -72,11 +72,12 @@ export default function MarketContextCard({ content = {}, valuation, property = 
         ? content.body
         : defaultLines;
 
-    const configuredExamples = Array.isArray(content?.examples) && content.examples.length >= 3
+    const customExamples = Array.isArray(content?.examples)
         ? content.examples
             .filter((example) => example?.type && Number(example?.price) > 0)
             .map((example) => ({ type: String(example.type), price: Number(example.price) }))
-        : defaultExamples;
+        : [];
+    const configuredExamples = customExamples.length >= 3 ? customExamples : defaultExamples;
 
     const regionLabel = property?.city ? `${property.city} & Umgebung` : 'Ihre Region';
     const seed = seedFromString(`${property?.city ?? ''}|${property?.property_type ?? ''}|${valuation?.estimated_value ?? ''}`);
