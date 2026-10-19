@@ -2,12 +2,12 @@ import Icon from '@/Components/ui/Icon';
 import { formatCurrency } from '@/lib/utils';
 import '../../../css/market-context-card.css';
 
-export default function MarketContextCard({ content = {}, valuation, property = {} }) {
+export default function MarketContextCard({ content = {}, valuation, property = {}, ctaHref = '#bewertung', ctaLabel }) {
     const defaultLines = [
         'Wie ordnet sich Ihre Immobilie im direkten Marktumfeld ein?',
         'Welche vergleichbaren Immobilien sind für die Einordnung relevant?',
         'Wie entwickeln sich Angebot, Nachfrage und Preise in Ihrer Lage?',
-        'Im persönlichen Gespräch verdichten wir die automatisierte Ersteinschätzung zu einer belastbaren Marktanalyse.',
+        'Diese Faktoren betrachten wir gemeinsam, um aus der ersten Orientierung eine belastbare Marktanalyse zu machen.',
     ];
 
     const lines = Array.isArray(content?.body) && content.body.length > 0
@@ -21,18 +21,18 @@ export default function MarketContextCard({ content = {}, valuation, property = 
     const regionLabel = property?.city ? `${property.city} & Umgebung` : 'Ihre Region';
     const rangeLabel = hasRange
         ? `${formatCurrency(valuation.range_low)} – ${formatCurrency(valuation.range_high)}`
-        : 'Persönliche Marktanalyse';
+        : 'Lokale Marktdaten';
 
     return (
         <section className="market-context-card" aria-labelledby="market-context-title">
             <div className="market-context-content">
                 <p className="eyebrow"><span className="short-rule" />{content?.eyebrow ?? 'Markt & Vergleich'}</p>
-                <h2 id="market-context-title">{content?.title ?? 'Wie entwickelt sich der Markt rund um Ihre Immobilie?'}</h2>
+                <h2 id="market-context-title">{content?.title ?? 'Was passiert am Immobilienmarkt rund um Ihre Immobilie?'}</h2>
                 <div className="market-context-copy">
                     {lines.map((line) => <p key={line}>{line}</p>)}
                 </div>
-                <a className="btn-primary market-context-cta" href="#rueckruf">
-                    {content?.button_label ?? 'Persönliche Marktanalyse besprechen'}
+                <a className="btn-primary market-context-cta" href={ctaHref}>
+                    {ctaLabel ?? content?.button_label ?? 'Jetzt Immobilienwert ermitteln'}
                     <Icon name="arrow" size={18} />
                 </a>
             </div>
