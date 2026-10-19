@@ -19,7 +19,7 @@ export default function Show() {
                     </div>
                 </header>
                 <main id="main" className="site-container page-main">
-                    {valuation ? <ValuationResult valuation={valuation} summary={lead_summary} reportUrl={report_url} calendlyUrl={page.calendly_url} emailStatus={email_status} /> : (
+                    {valuation ? <ValuationResult valuation={valuation} summary={lead_summary} reportUrl={report_url} calendlyUrl={page.calendly_url} emailStatus={email_status} marketCard={page.content?.market_card ?? null} /> : (
                         <div className="valuation-layout">
                             <section className="intro-panel">
                                 <p className="eyebrow"><span className="short-rule" />{page.content?.eyebrow ?? 'Ihre Immobilienbewertung'}</p>
@@ -31,7 +31,7 @@ export default function Show() {
                                 </div>
                                 <div className="process-note">
                                     <h2>Ein guter Anfang für Ihre Entscheidung.</h2>
-                                    <ol><li><span>1</span> Eingabe Ihrer Daten</li><li><span>2</span> Unverbindliche Erstbewertung'</li><li><span>3</span> Gemeinsam die nächsten Schritte besprechen</li></ol>
+                                    <ol><li><span>1</span> Eingabe Ihrer Daten</li><li><span>2</span> Unverbindliche Erstbewertung</li><li><span>3</span> Gemeinsam die nächsten Schritte besprechen</li></ol>
                                 </div>
                                 <p className="intro-footnote">Unverbindliche Orientierung – keine verbindliche Verkehrswertermittlung.</p>
                             </section>
