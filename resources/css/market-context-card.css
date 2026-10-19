@@ -1,8 +1,8 @@
 .market-context-card {
     margin-top: 30px;
     display: grid;
-    grid-template-columns: minmax(0, 1.12fr) minmax(360px, .88fr);
-    min-height: 380px;
+    grid-template-columns: minmax(0, .95fr) minmax(430px, 1.05fr);
+    min-height: 430px;
     overflow: hidden;
     border: 1px solid #dcd8cf;
     border-radius: 12px;
@@ -11,7 +11,7 @@
 }
 
 .market-context-content {
-    padding: 42px 44px;
+    padding: 44px 42px;
     color: #f8fafc;
 }
 
@@ -21,10 +21,10 @@
 
 .market-context-content h2 {
     margin-top: 18px;
-    max-width: 560px;
+    max-width: 520px;
     color: #fff;
     font-family: Georgia, 'Times New Roman', serif;
-    font-size: clamp(30px, 3vw, 43px);
+    font-size: clamp(30px, 3vw, 42px);
     font-weight: 400;
     line-height: 1.14;
     letter-spacing: -.035em;
@@ -34,7 +34,7 @@
     margin-top: 24px;
     display: grid;
     gap: 9px;
-    max-width: 620px;
+    max-width: 570px;
     color: #d3dce8;
     font-size: 14px;
     line-height: 1.75;
@@ -53,113 +53,214 @@
     min-width: 285px;
 }
 
-.market-context-map {
-    position: relative;
-    min-height: 380px;
-    overflow: hidden;
-    background: linear-gradient(145deg, #f4f1eb 0%, #e6ebf0 100%);
+.sold-examples-panel {
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    min-width: 0;
+    padding: 26px 26px 22px;
+    background: #f4f1eb;
+    border-left: 1px solid rgba(23, 39, 65, .10);
 }
 
-.market-context-map::before {
+.sold-examples-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 2px 2px 18px;
+}
+
+.sold-examples-kicker {
+    margin: 0 0 6px;
+    color: #b44637;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+}
+
+.sold-examples-heading h3 {
+    margin: 0;
+    max-width: 320px;
+    color: #172741;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 27px;
+    font-weight: 400;
+    line-height: 1.15;
+    letter-spacing: -.025em;
+}
+
+.sold-examples-demo {
+    flex-shrink: 0;
+    border: 1px solid #d8cfc3;
+    border-radius: 999px;
+    padding: 6px 9px;
+    color: #867a6c;
+    background: #fffaf5;
+    font-size: 9px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.sold-examples-map {
+    position: relative;
+    min-height: 300px;
+    overflow: hidden;
+    border: 1px solid #d9dfe6;
+    border-radius: 14px;
+    background:
+        radial-gradient(circle at 78% 19%, rgba(255, 255, 255, .98), transparent 26%),
+        linear-gradient(145deg, #eef2f5 0%, #dde4ea 100%);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.58);
+}
+
+.sold-examples-map::after {
     content: '';
     position: absolute;
     inset: 0;
-    background: radial-gradient(circle at 72% 22%, rgba(255,255,255,.95), transparent 33%);
+    z-index: 1;
     pointer-events: none;
+    background: linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,0));
 }
 
-.market-context-map svg {
+.sold-examples-map-art {
     position: absolute;
-    top: 24px;
-    right: 22px;
-    width: min(82%, 350px);
-    height: calc(100% - 48px);
-    fill: #cfd8e2;
-    stroke: #fff;
-    stroke-width: 3;
-    filter: drop-shadow(0 10px 18px rgba(23, 39, 65, .08));
+    inset: 0;
+    width: 100%;
+    height: 100%;
 }
 
-.market-context-badge {
-    position: absolute;
-    z-index: 2;
-    display: grid;
-    gap: 3px;
-    min-width: 134px;
-    padding: 11px 14px;
-    border-radius: 8px;
-    background: #b44637;
-    color: #fff;
-    box-shadow: 0 9px 24px rgba(23, 39, 65, .17);
-    text-align: center;
+.sold-examples-map-art > rect {
+    fill: transparent;
 }
 
-.market-context-badge::after {
-    content: '';
-    position: absolute;
-    bottom: -8px;
-    left: 50%;
-    width: 16px;
-    height: 16px;
-    transform: translateX(-50%) rotate(45deg);
-    background: inherit;
-    z-index: -1;
-}
-
-.market-context-badge small {
-    font-size: 9px;
-    line-height: 1.2;
-    text-transform: uppercase;
-    letter-spacing: .09em;
+.sold-map-blocks {
+    fill: #d2dbe3;
     opacity: .78;
 }
 
-.market-context-badge strong,
-.market-context-badge span {
-    font-size: 12px;
-    line-height: 1.25;
+.sold-map-roads {
+    fill: none;
+    stroke: #ffffff;
+    stroke-width: 15;
+    stroke-linecap: round;
+    opacity: .96;
+}
+
+.sold-map-minor-roads {
+    fill: none;
+    stroke: #f8fafc;
+    stroke-width: 7;
+    stroke-linecap: round;
+    opacity: .95;
+}
+
+.sold-object-flag {
+    position: absolute;
+    z-index: 3;
+    min-width: 142px;
+    max-width: 172px;
+    padding: 10px 12px 11px;
+    border: 1px solid rgba(128, 49, 39, .18);
+    border-radius: 8px;
+    background: #b44637;
+    color: #fff;
+    box-shadow: 0 10px 24px rgba(23, 39, 65, .22);
+    transform: translateZ(0);
+}
+
+.sold-object-flag::after {
+    content: '';
+    position: absolute;
+    left: 22px;
+    bottom: -8px;
+    width: 16px;
+    height: 16px;
+    transform: rotate(45deg);
+    border-right: 1px solid rgba(128, 49, 39, .18);
+    border-bottom: 1px solid rgba(128, 49, 39, .18);
+    background: #b44637;
+}
+
+.sold-object-status {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 4px;
+    color: #f3d5d0;
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: .11em;
+    text-transform: uppercase;
+}
+
+.sold-object-status i {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 0 0 2px rgba(255,255,255,.22);
+}
+
+.sold-object-flag strong {
+    display: block;
+    overflow: hidden;
+    color: #fff;
+    font-size: 11px;
     font-weight: 600;
+    line-height: 1.25;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-.market-context-badge--primary {
-    top: 112px;
-    left: 38px;
-    min-width: 174px;
-    background: #172741;
-}
-
-.market-context-badge--primary strong {
+.sold-object-flag b {
+    display: block;
+    margin-top: 4px;
+    color: #fff;
     font-family: Georgia, 'Times New Roman', serif;
-    font-size: 19px;
+    font-size: 18px;
     font-weight: 400;
+    line-height: 1.1;
+    letter-spacing: -.02em;
 }
 
-.market-context-badge--micro {
-    top: 58px;
-    right: 34px;
+.sold-examples-footer {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 14px 2px 0;
 }
 
-.market-context-badge--comparables {
-    top: 218px;
-    left: 86px;
+.sold-examples-footer span {
+    flex-shrink: 0;
+    color: #172741;
+    font-size: 10px;
+    font-weight: 700;
 }
 
-.market-context-badge--trend {
-    right: 30px;
-    bottom: 50px;
+.sold-examples-footer small {
+    max-width: 270px;
+    color: #7b7f79;
+    font-size: 9px;
+    line-height: 1.45;
+    text-align: right;
 }
 
-@media (max-width: 920px) {
+@media (max-width: 1000px) {
     .market-context-card {
         grid-template-columns: 1fr;
     }
 
-    .market-context-map {
-        min-height: 330px;
+    .sold-examples-panel {
+        border-top: 1px solid rgba(23, 39, 65, .10);
+        border-left: 0;
     }
 
-    .market-context-map svg {
-        width: min(72%, 330px);
+    .sold-examples-map {
+        min-height: 340px;
     }
 }
 
@@ -186,27 +287,63 @@
         min-width: 0;
     }
 
-    .market-context-map {
-        min-height: 300px;
+    .sold-examples-panel {
+        padding: 22px 18px 18px;
     }
 
-    .market-context-badge--primary {
-        top: 90px;
-        left: 18px;
+    .sold-examples-heading {
+        gap: 12px;
     }
 
-    .market-context-badge--micro {
-        top: 36px;
-        right: 18px;
+    .sold-examples-heading h3 {
+        font-size: 23px;
     }
 
-    .market-context-badge--comparables {
-        top: 190px;
-        left: 52px;
+    .sold-examples-demo {
+        padding: 5px 7px;
+        font-size: 8px;
     }
 
-    .market-context-badge--trend {
-        right: 18px;
-        bottom: 32px;
+    .sold-examples-map {
+        min-height: 330px;
+    }
+
+    .sold-object-flag {
+        min-width: 128px;
+        max-width: 145px;
+        padding: 9px 10px 10px;
+    }
+
+    .sold-object-flag b {
+        font-size: 16px;
+    }
+
+    .sold-examples-footer {
+        display: grid;
+        gap: 6px;
+    }
+
+    .sold-examples-footer small {
+        max-width: none;
+        text-align: left;
+    }
+}
+
+@media (max-width: 430px) {
+    .sold-examples-map {
+        min-height: 360px;
+    }
+
+    .sold-object-flag {
+        min-width: 118px;
+        max-width: 135px;
+    }
+
+    .sold-object-flag strong {
+        font-size: 10px;
+    }
+
+    .sold-object-flag b {
+        font-size: 15px;
     }
 }
