@@ -283,6 +283,12 @@
                 {{ $property?->plot_area ? number_format((float) $property->plot_area, 0, ',', '.') . ' m²' : '-' }}
             </td>
         </tr>
+        @if($property?->number_of_units)
+            <tr>
+                <td class="label">Wohneinheiten</td>
+                <td class="value">{{ $property->number_of_units }}</td>
+            </tr>
+        @endif
         <tr>
             <td class="label">Anzahl Zimmer</td>
             <td class="value">{{ $property?->rooms ?: '-' }}</td>
