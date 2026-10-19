@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreLeadRequest extends FormRequest
 {
@@ -13,6 +14,11 @@ class StoreLeadRequest extends FormRequest
 
     public function rules(): array
     {
+        $selectablePropertyTypes = collect(config('landingpages.property_types', []))
+            ->filter(fn (array $type) => ($type['selectable'] ?? true) === true)
+            ->keys()
+            ->all();
+
         return [
             'first_name' => ['nullable', 'string', 'max:100'],
             'last_name' => ['nullable', 'string', 'max:100'],
@@ -22,7 +28,7 @@ class StoreLeadRequest extends FormRequest
             'phone_contact_consent' => ['required', 'accepted'],
             'valuation_disclaimer_accepted' => ['required', 'accepted'],
 
-            'property.property_type' => ['nullable', 'string', 'max:100'],
+            'property.property_type' => ['required', 'string', 'max:100', Rule::in($selectablePropertyTypes)],
             'property.street' => ['nullable', 'string', 'max:255'],
             'property.house_number' => ['nullable', 'string', 'max:30'],
             'property.zip' => ['nullable', 'string', 'max:20'],
