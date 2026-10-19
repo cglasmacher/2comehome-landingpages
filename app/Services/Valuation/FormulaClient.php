@@ -2,10 +2,20 @@
 
 namespace App\Services\Valuation;
 
+use Illuminate\Support\Str;
+use RuntimeException;
+
 class FormulaClient
 {
     public function valuate(array $property): array
     {
+        $propertyType = Str::lower(trim((string) ($property['property_type'] ?? '')));
+        $typeConfig = config('landingpages.property_types.'.$propertyType);
+
+        if ($propertyType === '' || ! is_array($typeConfig) || ($typeConfig['selectable'] ?? true) !== true) {
+            throw new RuntimeException('unsupported_property');
+        }
+
         $livingArea = (float) ($property['living_area'] ?? 100);
         $zip = (string) ($property['zip'] ?? '');
 
@@ -28,7 +38,11 @@ class FormulaClient
             $base *= 1.15;
         }
 
-        if (! empty($property['rooms']) && (float) $property['rooms'] >= 4) {
+        // Room count is useful for individual homes/apartments but would systematically
+        // overvalue multi-family houses, where a high total room count is expected.
+        if ($propertyType !== 'mehrfamilienhaus'
+            && ! empty($property['rooms'])
+            && (float) $property['rooms'] >= 4) {
             $base *= 1.05;
         }
 
