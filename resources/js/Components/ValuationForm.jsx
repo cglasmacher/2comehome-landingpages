@@ -26,7 +26,7 @@ export function ValuationForm({ action, onSuccess, propertyTypes = [] }) {
     const { data, setData, post, processing, errors } = useForm({
         first_name: '', last_name: '', email: '', phone: '', notes: '',
         phone_contact_consent: false, valuation_disclaimer_accepted: false,
-        property: { property_type: '', street: '', house_number: '', zip: '', city: '', country: 'DE', construction_year: '', living_area: '', plot_area: '', rooms: '' },
+        property: { property_type: '', street: '', house_number: '', zip: '', city: '', country: 'DE', construction_year: '', living_area: '', plot_area: '', rooms: '', number_of_units: '' },
     });
     const changeProperty = (key, value) => setData('property', { ...data.property, [key]: value });
     const changeStep = (value) => {
@@ -45,6 +45,8 @@ export function ValuationForm({ action, onSuccess, propertyTypes = [] }) {
         });
     };
 
+    const isMultiFamily = data.property.property_type === 'mehrfamilienhaus';
+
     return (
         <div className="valuation-form">
             <div className="form-progress" aria-label="Fortschritt"><span className={step === 0 ? 'active' : 'complete'} aria-current={step === 0 ? 'step' : undefined}><b>{step > 0 ? '✓' : '1'}</b> Ihre Immobilie</span><i /><span className={step === 1 ? 'active' : ''} aria-current={step === 1 ? 'step' : undefined}><b>2</b> Ihr Kontakt</span></div>
@@ -54,18 +56,22 @@ export function ValuationForm({ action, onSuccess, propertyTypes = [] }) {
                     <>
                         <fieldset className="property-selector"><legend>Immobilienart</legend><div className="property-options">{propertyTypes.map(({ value, label, icon }) => (
                             <label className={data.property.property_type === value ? 'property-option selected' : 'property-option'} key={value}>
-                                <input type="radio" name="property_type" value={value} checked={data.property.property_type === value} onChange={() => changeProperty('property_type', value)} />
+                                <input type="radio" name="property_type" value={value} checked={data.property.property_type === value} onChange={() => changeProperty('property_type', value)} required />
                                 <Icon name={icon} size={25} /><span>{label}</span>
                             </label>
                         ))}</div>{errors['property.property_type'] && <p className="field-error" role="alert">{errors['property.property_type']}</p>}</fieldset>
                         <div className="form-section-title"><Icon name="pin" size={18} /> Adresse & Eckdaten</div>
-                        <div className="field-grid">{propertyFields.map(([key, label, type, placeholder, autoComplete]) => (
-                            <Field key={key} id={key} label={label} type={type} placeholder={placeholder} autoComplete={autoComplete} inputMode={key === 'zip' ? 'numeric' : undefined}
-                                min={type === 'number' ? (key === 'construction_year' ? 1700 : 1) : undefined}
-                                max={key === 'construction_year' ? new Date().getFullYear() : undefined}
-                                step={key === 'rooms' ? '0.5' : undefined}
-                                value={data.property[key]} onChange={(event) => changeProperty(key, event.target.value)} error={errors['property.' + key]} />
-                        ))}</div>
+                        <div className="field-grid">
+                            {propertyFields.map(([key, label, type, placeholder, autoComplete]) => (
+                                <Field key={key} id={key} label={label} type={type} placeholder={placeholder} autoComplete={autoComplete} inputMode={key === 'zip' ? 'numeric' : undefined}
+                                    min={type === 'number' ? (key === 'construction_year' ? 1700 : 1) : undefined}
+                                    max={key === 'construction_year' ? new Date().getFullYear() : undefined}
+                                    step={key === 'rooms' ? '0.5' : undefined}
+                                    value={data.property[key]} onChange={(event) => changeProperty(key, event.target.value)} error={errors['property.' + key]} />
+                            ))}
+                            {isMultiFamily && <Field id="number_of_units" label="Wohneinheiten *" type="number" placeholder="z. B. 8" min="2" max="1000" step="1" required value={data.property.number_of_units} onChange={(event) => changeProperty('number_of_units', event.target.value)} error={errors['property.number_of_units']} />}
+                        </div>
+                        {isMultiFamily && <p className="form-assurance multifamily-note"><Icon name="building" size={14} /> Für Mehrfamilienhäuser benötigen wir die Anzahl der Wohneinheiten für die Bewertung.</p>}
                     </>
                 ) : (
                     <>
