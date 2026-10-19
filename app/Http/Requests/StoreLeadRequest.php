@@ -35,9 +35,10 @@ class StoreLeadRequest extends FormRequest
             'property.city' => ['nullable', 'string', 'max:255'],
             'property.country' => ['nullable', 'string', 'size:2'],
             'property.construction_year' => ['nullable', 'integer', 'min:1700', 'max:' . now()->year],
-            'property.living_area' => ['nullable', 'integer', 'min:1', 'max:5000'],
+            'property.living_area' => ['nullable', 'integer', 'min:1', 'max:800000'],
             'property.plot_area' => ['nullable', 'integer', 'min:1', 'max:100000'],
             'property.rooms' => ['nullable', 'numeric', 'min:1', 'max:100'],
+            'property.number_of_units' => ['required_if:property.property_type,mehrfamilienhaus', 'nullable', 'integer', 'min:2', 'max:1000'],
             'property.features' => ['nullable', 'array'],
         ];
     }
