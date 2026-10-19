@@ -51,6 +51,10 @@ class PriceHubbleClient
 
         $valuation = data_get($response, 'valuations.0.0');
         if (is_array($valuation)) {
+            if (isset($valuation['status']['code'])) {
+                throw new RuntimeException('invalid_estimate');
+            }
+
             $response['estimated_value'] ??= $this->numeric(
                 $valuation['salePrice'] ?? $valuation['value'] ?? null
             );
@@ -119,11 +123,16 @@ class PriceHubbleClient
                 throw new RuntimeException('missing_property_data');
             }
             $propertyPayload['landArea'] = $landArea;
-        } elseif ($propertyCode === 'multi_family_house' && $landArea !== null) {
-            $propertyPayload['landArea'] = $landArea;
-        }
-
-        if ($propertyCode !== 'multi_family_house') {
+        } elseif ($propertyCode === 'multi_family_house') {
+            $numberOfUnits = filter_var($property['number_of_units'] ?? null, FILTER_VALIDATE_INT);
+            if ($numberOfUnits === false || $numberOfUnits < 2 || $numberOfUnits > 1000) {
+                throw new RuntimeException('missing_property_data');
+            }
+            $propertyPayload['numberOfUnits'] = (int) $numberOfUnits;
+            if ($landArea !== null) {
+                $propertyPayload['landArea'] = $landArea;
+            }
+        } else {
             $rooms = $this->numeric($property['rooms'] ?? null);
             if ($rooms !== null) {
                 $propertyPayload['numberOfRooms'] = $rooms;
