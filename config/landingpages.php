@@ -51,7 +51,7 @@ return [
             // Somantic currently distinguishes house vs. apartment; MFH therefore uses the house route there.
             'somantic' => 'haus',
             'pricehubble' => ['code' => 'multi_family_house'],
-            'onoffice' => ['objektart' => 'haus', 'objekttyp' => 'mehrfamilienhaus'],
+            'onoffice' => ['objektart' => 'haus', 'objekttyp' => 'hausbau_mehrfamilienhaus'],
         ],
         'grundstück' => [
             'label' => 'Grundstück',
