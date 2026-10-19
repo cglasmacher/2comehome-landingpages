@@ -1,10 +1,9 @@
 import { useState } from 'react';
 import { CalendlyModal, safeCalendlyUrl } from '@/Components/CalendlyModal';
-import MarketContextCard from '@/Components/LandingPages/MarketContextCard';
 import Icon from '@/Components/ui/Icon';
 import { formatCurrency } from '@/lib/utils';
 
-export default function ValuationResult({ valuation, summary, reportUrl, calendlyUrl, emailStatus, marketCard }) {
+export default function ValuationResult({ valuation, summary, reportUrl, calendlyUrl, emailStatus }) {
     const [bookingOpen, setBookingOpen] = useState(false);
     const contact = summary?.contact ?? {};
     const property = summary?.property ?? {};
@@ -44,7 +43,6 @@ export default function ValuationResult({ valuation, summary, reportUrl, calendl
                     <section className="email-notice"><Icon name="file" size={24} /><div><h2>{emailStatus === 'sent' ? 'Ihr Bericht ist unterwegs.' : 'Ihr Bericht zum Mitnehmen.'}</h2><p>{emailStatus === 'sent' ? 'Die E-Mail mit Ihrem PDF-Bericht wurde an den Mailserver übergeben:' : 'Der PDF-Bericht steht hier zum Download bereit. Der Versand per E-Mail ist noch nicht bestätigt.'}</p>{contact.email && <strong>{contact.email}</strong>}{emailStatus === 'sent' && <p className="email-hint">Bitte prüfen Sie gegebenenfalls auch Ihren Spamordner.</p>}</div></section>
                 </aside>
             </div>
-            <MarketContextCard content={marketCard ?? {}} valuation={valuation} property={property} />
             <CalendlyModal url={calendlyUrl} isOpen={bookingOpen} onClose={() => setBookingOpen(false)} />
         </div>
     );
