@@ -10,6 +10,8 @@ use App\Http\Controllers\ValuationResultController;
 use Illuminate\Support\Facades\Route;
 
 Route::domain(config('landingpages.public_domain'))->group(function () {
+    Route::permanentRedirect('/', '/kostenlose-wertermittlung');
+
     Route::get('/admin/login', [AdminAuthController::class, 'create'])->name('login');
     Route::post('/admin/login', [AdminAuthController::class, 'store'])->name('admin.login.store');
 
