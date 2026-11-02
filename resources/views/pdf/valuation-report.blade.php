@@ -424,5 +424,16 @@
         </div>
     @endif
 
+    @if($isFinalReport && !empty($hasContractSigning))
+        <div class="page-break"></div>
+        <div class="header"><img src="{{ public_path('images/logo-2comehome.png') }}" alt="2 COME HOME Immobilien" class="logo"></div>
+        <h1>Ihr nächster Schritt zum Verkauf</h1>
+        <p>Wir haben Ihren Maklerauftrag mit den vereinbarten Konditionen vorbereitet. Über Ihren persönlichen Link können Sie den vollständigen Vertrag prüfen und digital unterzeichnen.</p>
+        @foreach($contractSigningLinks as $link)
+            <h2>{{ $link['name'] }}</h2>
+            <p><a href="{{ $link['url'] }}" style="color: #a24a3d; font-weight: bold;">Maklerauftrag prüfen und unterzeichnen →</a></p>
+        @endforeach
+        <p class="notice">Diese Links sind persönlich. Bitte nutzen Sie jeweils den Link mit Ihrem Namen.</p>
+    @endif
 </body>
 </html>

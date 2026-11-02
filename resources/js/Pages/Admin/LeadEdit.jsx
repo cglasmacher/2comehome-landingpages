@@ -7,7 +7,7 @@ const money = (value) => {
     return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(Number(value));
 };
 
-export default function LeadEdit({ lead }) {
+export default function LeadEdit({ lead, contracts = [] }) {
     const { flash } = usePage().props;
     const valuation = lead.valuation ?? {};
 
@@ -62,6 +62,16 @@ export default function LeadEdit({ lead }) {
             </div>
 
             {flash?.success && <div className="mb-6 rounded-lg border border-[#b9d1b9] bg-[#f0f7ef] px-4 py-3 text-sm text-[#426145]">{flash.success}</div>}
+
+            <section className="mb-6 rounded-xl border border-[#ddd9d0] bg-white p-6 shadow-sm">
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                    <div><h2 className="text-xl font-semibold text-[#172741]">Makleraufträge</h2><p className="mt-2 text-xs text-[#74776f]">Verträge erstellen und Unterschriften verwalten.</p></div>
+                    <Link href={route('admin.leads.contracts.create', lead.id)} className="rounded-md bg-[#172741] px-4 py-3 text-sm font-semibold text-white">Maklerauftrag erstellen</Link>
+                </div>
+                {contracts.length ? <div className="mt-5 divide-y divide-[#ebe8e1]">{contracts.map((contract) => <Link key={contract.id} href={contract.edit_url} className="flex flex-wrap items-center justify-between gap-3 py-4 text-sm hover:text-[#a24a3d]">
+                    <span className="font-semibold">Auftrag #{contract.id} · {money(contract.offer_price)}</span><span>{({ draft: 'Entwurf', created: 'Erstellt', partially_signed: 'Teilweise unterschrieben', signed: 'Vollständig unterschrieben' })[contract.status]} · {contract.created_at} →</span>
+                </Link>)}</div> : <p className="mt-5 text-sm text-[#74776f]">Noch kein Maklerauftrag angelegt.</p>}
+            </section>
 
             <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(340px,.65fr)]">
                 <section className="rounded-xl border border-[#ddd9d0] bg-white p-6 shadow-sm">

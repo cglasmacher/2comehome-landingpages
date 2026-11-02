@@ -22,6 +22,7 @@ export default function AdminLayout({ title, children }) {
                             </div>
                         </div>
                         <div className="flex items-center gap-4">
+                            <Link href={route('admin.signature.edit')} className="text-xs font-semibold hover:underline">Meine Unterschrift</Link>
                             <span className="hidden text-xs text-white/65 md:inline">{auth?.user?.email}</span>
                             <button type="button" onClick={logout} className="rounded-md border border-white/25 px-3 py-2 text-xs font-semibold hover:bg-white/10">
                                 Abmelden

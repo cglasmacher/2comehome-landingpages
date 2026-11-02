@@ -18,6 +18,12 @@ class AdminLeadController extends Controller
         $lead->load(['landingPage', 'property', 'valuation', 'latestOnOfficeSync']);
 
         return Inertia::render('Admin/LeadEdit', [
+            'contracts' => $lead->brokerageContracts()->latest()->get()->map(fn ($contract) => [
+                'id' => $contract->id, 'status' => $contract->status,
+                'offer_price' => $contract->offer_price,
+                'created_at' => $contract->created_at->timezone('Europe/Berlin')->format('d.m.Y H:i'),
+                'edit_url' => route('admin.contracts.edit', $contract),
+            ]),
             'lead' => [
                 'id' => $lead->id,
                 'uuid' => $lead->uuid,
