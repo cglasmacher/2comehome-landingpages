@@ -27,6 +27,11 @@ class Lead extends Model
         });
     }
 
+    public function brokerageContracts(): HasMany
+    {
+        return $this->hasMany(BrokerageContract::class);
+    }
+
     public function landingPage(): BelongsTo
     {
         return $this->belongsTo(LandingPage::class);
