@@ -28,7 +28,19 @@ export function ValuationForm({ action, onSuccess, propertyTypes = [] }) {
         phone_contact_consent: false, valuation_disclaimer_accepted: false,
         property: { property_type: '', street: '', house_number: '', zip: '', city: '', country: 'DE', construction_year: '', living_area: '', plot_area: '', rooms: '', number_of_units: '' },
     });
-    const changeProperty = (key, value) => setData('property', { ...data.property, [key]: value });
+    const changeProperty = (key, value) => {
+        if (key === 'property_type') {
+            setData('property', {
+                ...data.property,
+                property_type: value,
+                plot_area: value === 'wohnung' ? '' : data.property.plot_area,
+                number_of_units: value === 'mehrfamilienhaus' ? data.property.number_of_units : '',
+            });
+            return;
+        }
+
+        setData('property', { ...data.property, [key]: value });
+    };
     const changeStep = (value) => {
         setStep(value);
         requestAnimationFrame(() => { heading.current?.focus(); heading.current?.scrollIntoView({ block: 'nearest' }); });
@@ -45,7 +57,9 @@ export function ValuationForm({ action, onSuccess, propertyTypes = [] }) {
         });
     };
 
+    const isApartment = data.property.property_type === 'wohnung';
     const isMultiFamily = data.property.property_type === 'mehrfamilienhaus';
+    const visiblePropertyFields = propertyFields.filter(([key]) => !(isApartment && key === 'plot_area'));
 
     return (
         <div className="valuation-form">
@@ -62,7 +76,7 @@ export function ValuationForm({ action, onSuccess, propertyTypes = [] }) {
                         ))}</div>{errors['property.property_type'] && <p className="field-error" role="alert">{errors['property.property_type']}</p>}</fieldset>
                         <div className="form-section-title"><Icon name="pin" size={18} /> Adresse & Eckdaten</div>
                         <div className="field-grid">
-                            {propertyFields.map(([key, label, type, placeholder, autoComplete]) => (
+                            {visiblePropertyFields.map(([key, label, type, placeholder, autoComplete]) => (
                                 <Field key={key} id={key} label={label} type={type} placeholder={placeholder} autoComplete={autoComplete} inputMode={key === 'zip' ? 'numeric' : undefined}
                                     min={type === 'number' ? (key === 'construction_year' ? 1700 : 1) : undefined}
                                     max={key === 'construction_year' ? new Date().getFullYear() : undefined}
