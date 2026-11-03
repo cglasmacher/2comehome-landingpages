@@ -10,5 +10,5 @@ return [
     'notice_months' => 1,
     'renewal_months' => 1,
     'signing_link_days' => 30,
-    'template_version' => 'verkauf-2026-11-v1',
+    'template_version' => 'verkauf-2026-11-v2',
 ];

@@ -48,6 +48,7 @@ class BrokerageContractService
             'issued_on' => now()->timezone('Europe/Berlin')->format('d.m.Y'),
             'special_agreements' => $contract->special_agreements,
             'template_version' => config('brokerage.template_version'),
+            'artwork' => json_decode(file_get_contents(resource_path('contracts/brand/artwork.json')), true, flags: JSON_THROW_ON_ERROR),
             'terms' => json_decode(file_get_contents(resource_path('contracts/sale-terms.json')), true, flags: JSON_THROW_ON_ERROR),
             'logo' => is_file(public_path('images/logo-2comehome.png'))
                 ? 'data:image/png;base64,'.base64_encode(file_get_contents(public_path('images/logo-2comehome.png'))) : null,
@@ -56,11 +57,23 @@ class BrokerageContractService
 
     public function bytes(BrokerageContract $contract): string
     {
-        return Pdf::loadView('pdf.brokerage-contract', [
-            'document' => $contract->snapshot ?? $this->snapshot($contract),
+        $document = $contract->snapshot ?? $this->snapshot($contract);
+        $view = isset($document['artwork']) ? 'pdf.brokerage-contract-branded' : 'pdf.brokerage-contract';
+
+        $pdf = Pdf::loadView($view, [
+            'document' => $document,
             'draft' => $contract->status === 'draft',
             'signers' => $contract->signers()->get(),
-        ])->setPaper('a4')->setOption('isRemoteEnabled', false)->output();
+        ])->setPaper('a4')->setOption('isRemoteEnabled', false);
+
+        if (isset($document['artwork'])) {
+            $pdf->setOptions([
+                'fontDir' => storage_path('framework/cache'),
+                'fontCache' => storage_path('framework/cache'),
+            ], mergeWithDefaults: true);
+        }
+
+        return $pdf->output();
     }
 
     public function finalize(BrokerageContract $contract): void
