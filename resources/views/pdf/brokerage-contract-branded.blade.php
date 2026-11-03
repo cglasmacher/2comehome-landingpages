@@ -18,16 +18,17 @@
         .address, .special { white-space: pre-line; }
         .seller-address { margin: 24pt 0 16pt; }
         .clause { margin-left: 36pt; position: relative; }
+        .clause h2 { margin-bottom: 7pt; }
         .clause h2 span { position: absolute; left: -18pt; }
-        .clause p { text-align: justify; }
-        .clause + .clause { margin-top: 22pt; }
+        .clause p { text-align: justify; margin-bottom: 7pt; }
+        .clause + .clause { margin-top: 16pt; }
         .page-break { page-break-before: always; }
-        .signatures { width: 100%; table-layout: fixed; border-collapse: collapse; margin-top: 30pt; }
+        .signatures { width: 100%; table-layout: fixed; border-collapse: collapse; margin-top: 12pt; }
         .signatures td { width: 46%; vertical-align: top; padding: 0 14pt 0 0; }
         .signatures td:first-child { width: 54%; }
         .signature { page-break-inside: avoid; margin-bottom: 14pt; }
-        .signature img { display: block; max-width: 120pt; max-height: 51pt; }
-        .signature-space { min-height: 45pt; }
+        .signature img { display: block; max-width: 120pt; max-height: 40pt; }
+        .signature-space { min-height: 40pt; }
         .signature-line { border-bottom: .5pt solid black; width: 160pt; }
         .signature p { margin: 0; }
         .legal { font-size: 8pt; line-height: 1.23; }
@@ -38,7 +39,7 @@
         .agb { font-size: 7.7pt; line-height: 1.12; }
         .agb p { margin-bottom: 4pt; }
         .agb h2 { margin: 6pt 0 2pt; }
-        .page-break.clause + .clause, .page-break.clause + .clause ~ .clause { margin-top: 17pt; }
+        .page-break.clause + .clause, .page-break.clause + .clause ~ .clause { margin-top: 10pt; }
         .muted { font-size: 8pt; }
         .agb .date { text-align: right; }
         .draft { font: bold 8pt Helvetica, sans-serif; }
