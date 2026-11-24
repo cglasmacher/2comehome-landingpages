@@ -151,6 +151,20 @@ class AdminValuationLetterTest extends TestCase
         $this->get(route('admin.leads.letter.photo', [$lead, 1]))->assertNotFound();
     }
 
+    public function test_pdf_must_be_reviewed_again_when_property_changes(): void
+    {
+        $lead = $this->lead();
+        $this->actingAs(User::factory()->create(['is_admin' => true]));
+        $this->post(route('admin.leads.letter.store', $lead), $this->letterData())->assertRedirect();
+
+        $this->travel(10)->seconds();
+        $lead->property()->update(['living_area' => 75]);
+
+        $this->get(route('admin.leads.letter.preview', $lead))->assertStatus(409);
+        $this->post(route('admin.leads.letter.store', $lead), $this->letterData())->assertRedirect();
+        $this->get(route('admin.leads.letter.preview', $lead))->assertOk();
+    }
+
     public function test_non_admin_cannot_read_or_write_valuation_letters(): void
     {
         $lead = $this->lead();
