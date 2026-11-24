@@ -7,46 +7,49 @@
         @page { size: A4; margin: 0; }
         * { box-sizing: border-box; }
         html, body { margin: 0; padding: 0; }
-        body { color: #090909; font-family: "Times New Roman", "DejaVu Serif", serif; font-size: 12pt; }
+        /* Public landingpage headlines use Georgia (resources/css/app.css).
+           Dompdf can fall back to its bundled DejaVu Serif when Georgia is not
+           installed on the PHP host. This intentionally needs no remote fonts. */
+        body { color: #111111; font-family: Georgia, "DejaVu Serif", serif; font-size: 10.8pt; line-height: 1.28; }
         .page { position: relative; width: 595pt; height: 841pt; page-break-after: always; overflow: hidden; }
         .page:last-child { page-break-after: auto; }
         .watermark { position: absolute; left: 143.75pt; top: 159pt; width: 315pt; height: 580pt; }
         .logo { position: absolute; left: 388.6pt; top: 28.35pt; width: 142.4pt; height: 110.5pt; }
-        .page-two .logo { left: 411pt; top: 28.35pt; width: 141.7pt; height: 110pt; }
+        .page-two .logo { left: 422pt; top: 15pt; width: 122pt; height: 95pt; }
         .block { position: absolute; z-index: 1; }
         .sender { left: 70.8pt; top: 164pt; width: 294pt; color: #9c563b; font-size: 7.9pt; }
-        .recipient { left: 70.8pt; top: 180pt; width: 300pt; font-size: 11pt; line-height: 1.28; }
+        .recipient { left: 70.8pt; top: 180pt; width: 300pt; font-size: 10.6pt; line-height: 1.34; }
         .recipient div { margin: 0; padding: 0; }
-        .agent { left: 389.8pt; top: 162pt; width: 175pt; font-family: Georgia, "DejaVu Serif", serif; font-size: 7.9pt; line-height: 1.42; }
-        .agent .agent-title { font-size: 10.5pt; }
-        .date { left: 389.8pt; top: 247pt; font-size: 11pt; }
+        .agent { left: 389.8pt; top: 162pt; width: 175pt; font-size: 8pt; line-height: 1.38; }
+        .agent .agent-title { font-size: 10.2pt; line-height: 1.25; }
+        .date { left: 389.8pt; top: 247pt; font-size: 10.8pt; }
         .vertical-mark { left: 10pt; top: 346pt; font-size: 13pt; color: #555; }
-        .headline { left: 70.8pt; top: 306pt; width: 430pt; font-size: 24pt; font-weight: 700; line-height: 1.05; }
-        .property-overview { left: 70.8pt; top: 349pt; width: 477pt; font-size: 11.8pt; line-height: 1.14; }
+        .headline { left: 70.8pt; top: 305pt; width: 430pt; font-family: Georgia, "DejaVu Serif", serif; font-size: 26pt; font-weight: 400; line-height: 1.13; letter-spacing: -.028em; }
+        .property-overview { left: 70.8pt; top: 351pt; width: 477pt; font-size: 10.5pt; line-height: 1.31; }
         .property-overview p { margin: 0; }
-        .section-heading { font-size: 18pt; font-weight: 700; line-height: 1.15; }
-        .object-heading { left: 70.8pt; top: 431pt; }
-        .description { left: 70.8pt; top: 466pt; width: 464pt; font-size: 11.9pt; line-height: 1.2; }
-        .description.compact { font-size: 10.7pt; line-height: 1.17; }
-        .market-heading { left: 70.8pt; top: 577pt; }
-        .market-copy { left: 70.8pt; top: 612pt; width: 466pt; line-height: 1.18; font-size: 11.8pt; }
-        .market-copy.compact { font-size: 10.5pt; }
-        .price-range { left: 70.8pt; top: 667pt; width: 475pt; font-size: 12pt; font-weight: 700; }
-        .sqm-value { left: 70.8pt; top: 695pt; width: 468pt; line-height: 1.2; font-size: 11.8pt; }
-        .footer { left: 69pt; right: 68pt; top: 748pt; height: 44pt; color: #a16d55; font-size: 6.45pt; line-height: 1.24; }
+        .section-heading { font-family: Georgia, "DejaVu Serif", serif; font-size: 18pt; font-weight: 400; line-height: 1.17; letter-spacing: -.022em; }
+        .object-heading { left: 70.8pt; top: 433pt; width: 465pt; }
+        .description { left: 70.8pt; top: 467pt; width: 464pt; font-size: 10.8pt; line-height: 1.30; }
+        .description.compact { font-size: 10.15pt; line-height: 1.23; }
+        .market-heading { left: 70.8pt; top: 581pt; width: 465pt; }
+        .market-copy { left: 70.8pt; top: 612pt; width: 466pt; font-size: 10.65pt; line-height: 1.29; }
+        .market-copy.compact { font-size: 10.0pt; line-height: 1.20; }
+        .price-range { left: 70.8pt; top: 678pt; width: 475pt; font-size: 11.0pt; line-height: 1.19; font-weight: 700; }
+        .sqm-value { left: 70.8pt; top: 704pt; width: 468pt; font-size: 10.25pt; line-height: 1.25; }
+        .footer { left: 69pt; right: 68pt; top: 748pt; height: 44pt; color: #a16d55; font-size: 6.35pt; line-height: 1.25; }
         .footer .foot-col { position: absolute; top: 0; }
         .footer .foot-left { left: 0; width: 168pt; }
         .footer .foot-middle { left: 174pt; width: 160pt; }
         .footer .foot-right { left: 337pt; width: 155pt; }
         .page-two .footer { top: 760pt; }
         .page-number { left: 70.8pt; top: 92pt; font-family: Arial, sans-serif; font-size: 6.1pt; }
-        .orientation { left: 70.8pt; top: 129pt; width: 462pt; line-height: 1.22; font-size: 12pt; }
-        .notes-heading { left: 70.8pt; top: 171pt; }
-        .legal { left: 70.8pt; top: 206pt; width: 463pt; line-height: 1.2; font-size: 11.8pt; }
-        .notes { left: 70.8pt; top: 261pt; width: 464pt; font-size: 11.8pt; line-height: 1.2; }
-        .notes.compact { font-size: 10.5pt; line-height: 1.16; }
-        .range-repeat { left: 70.8pt; top: 330pt; font-weight: 700; font-size: 11.8pt; }
-        .valuation-date { left: 70.8pt; top: 359pt; font-weight: 700; font-size: 11.8pt; }
+        .orientation { left: 70.8pt; top: 127pt; width: 462pt; font-size: 11.0pt; line-height: 1.30; }
+        .notes-heading { left: 70.8pt; top: 173pt; width: 465pt; }
+        .legal { left: 70.8pt; top: 207pt; width: 463pt; font-size: 10.5pt; line-height: 1.30; }
+        .notes { left: 70.8pt; top: 263pt; width: 464pt; font-size: 10.45pt; line-height: 1.27; }
+        .notes.compact { font-size: 9.65pt; line-height: 1.20; }
+        .range-repeat { left: 70.8pt; top: 345pt; font-weight: 700; font-size: 10.9pt; line-height: 1.18; }
+        .valuation-date { left: 70.8pt; top: 370pt; font-weight: 700; font-size: 10.9pt; line-height: 1.18; }
         .photo { position: absolute; z-index: 2; display: block; }
         .photo-1 { left: 70.9pt; top: 386.5pt; width: 144.7pt; height: 192.9pt; }
         .photo-2 { left: 221.9pt; top: 425.3pt; width: 205.5pt; height: 154.1pt; }
