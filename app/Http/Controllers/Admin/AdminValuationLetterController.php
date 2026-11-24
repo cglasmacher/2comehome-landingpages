@@ -25,7 +25,8 @@ class AdminValuationLetterController extends Controller
         $needsReview = $letter && $lead->property?->updated_at?->gt($letter->updated_at);
         $data = $letter ? [
             ...$letter->only([
-                'recipient_name', 'adviser_name', 'adviser_role', 'adviser_mobile', 'adviser_email',
+                'recipient_name', 'recipient_street', 'recipient_zip', 'recipient_city',
+                'adviser_name', 'adviser_role', 'adviser_mobile', 'adviser_email',
                 'property_label', 'floor_location', 'room_summary', 'object_description',
                 'market_description', 'value_low', 'value_high', 'orientation_value', 'valuation_notes',
             ]),
@@ -55,6 +56,7 @@ class AdminValuationLetterController extends Controller
             'fields' => $data,
             'saved' => (bool) $letter,
             'needs_review' => (bool) $needsReview,
+            'address_incomplete' => (bool) ($letter && $this->missingRecipientAddress($letter)),
             'photos' => $photos,
             'preview_url' => route('admin.leads.letter.preview', $lead),
             'download_url' => route('admin.leads.letter.download', $lead),
@@ -116,6 +118,7 @@ class AdminValuationLetterController extends Controller
     {
         $letter = $lead->valuationLetter;
         abort_unless($letter, 404);
+        abort_if($this->missingRecipientAddress($letter), 409, 'Die Empfängeranschrift fehlt. Bitte Straße, PLZ und Ort ergänzen und speichern.');
         abort_if($lead->property?->updated_at?->gt($letter->updated_at), 409, 'Objektdaten wurden nach dem Anschreiben geändert. Bitte prüfen und speichern Sie das Anschreiben erneut.');
 
         return $pdf->stream($lead, $letter);
@@ -125,6 +128,7 @@ class AdminValuationLetterController extends Controller
     {
         $letter = $lead->valuationLetter;
         abort_unless($letter, 404);
+        abort_if($this->missingRecipientAddress($letter), 409, 'Die Empfängeranschrift fehlt. Bitte Straße, PLZ und Ort ergänzen und speichern.');
         abort_if($lead->property?->updated_at?->gt($letter->updated_at), 409, 'Objektdaten wurden nach dem Anschreiben geändert. Bitte prüfen und speichern Sie das Anschreiben erneut.');
 
         return $pdf->download($lead, $letter);
@@ -141,6 +145,13 @@ class AdminValuationLetterController extends Controller
             'Cache-Control' => 'private, no-store',
             'X-Content-Type-Options' => 'nosniff',
         ]);
+    }
+
+    private function missingRecipientAddress(\App\Models\ValuationLetter $letter): bool
+    {
+        return blank($letter->recipient_street)
+            || blank($letter->recipient_zip)
+            || blank($letter->recipient_city);
     }
 
     private function defaults(Lead $lead): array
@@ -161,6 +172,10 @@ class AdminValuationLetterController extends Controller
 
         return [
             'recipient_name' => trim($lead->first_name.' '.$lead->last_name) ?: 'Bitte Empfänger eintragen',
+            // Seller mailing address cannot be inferred from the valuation property's location.
+            'recipient_street' => '',
+            'recipient_zip' => '',
+            'recipient_city' => '',
             'adviser_name' => config('valuation_letter.adviser_name'),
             'adviser_role' => config('valuation_letter.adviser_role'),
             'adviser_mobile' => config('valuation_letter.adviser_mobile'),
