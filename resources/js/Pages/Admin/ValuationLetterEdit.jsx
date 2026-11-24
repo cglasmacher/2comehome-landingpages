@@ -31,7 +31,7 @@ function TextArea({ title, name, value, setData, errors, hint, rows = 4, maxLeng
     );
 }
 
-export default function ValuationLetterEdit({ lead, fields, saved = false, needs_review = false, photos = {}, preview_url, download_url }) {
+export default function ValuationLetterEdit({ lead, fields, saved = false, needs_review = false, address_incomplete = false, photos = {}, preview_url, download_url }) {
     const { flash } = usePage().props;
     const initialData = { ...fields };
     for (let slot = 1; slot <= 4; slot++) {
@@ -112,7 +112,7 @@ export default function ValuationLetterEdit({ lead, fields, saved = false, needs
                     <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[#74776f]">Zweiseitiger Brief nach der vorgegebenen Vorlage mit Firmenlogo, Wasserzeichen, Ansprechpartner, Objektbeschreibung, Marktwert und vier Fotos. Die Werte sind unabhängig von der automatischen Ersteinschätzung editierbar.</p>
                     <p className="mt-2 text-xs text-[#8b8d86]">{lead.name || 'Lead #' + lead.id} · {lead.address || 'Adresse noch ergänzen'}</p>
                 </div>
-                {saved && !needs_review && (
+                {saved && !needs_review && !address_incomplete && (
                     <div className="flex flex-wrap gap-2">
                         <a href={preview_url} target="_blank" rel="noopener noreferrer" className="rounded-md border border-[#172741] px-4 py-2.5 text-sm font-semibold text-[#172741]">PDF ansehen</a>
                         <a href={download_url} className="rounded-md bg-[#172741] px-4 py-2.5 text-sm font-semibold text-white">PDF herunterladen</a>
@@ -123,13 +123,20 @@ export default function ValuationLetterEdit({ lead, fields, saved = false, needs
             {flash?.success && <div role="status" className="mb-5 rounded-lg border border-[#b9d1b9] bg-[#f0f7ef] px-4 py-3 text-sm text-[#426145]">{flash.success}</div>}
             {lead.source_status === 'stale' && <p className="mb-5 rounded-lg border border-[#e8cf9e] bg-[#fff8e8] px-4 py-3 text-sm text-[#795516]">Die automatische Einwertung ist aktuell als veraltet markiert. Prüfe die Marktwerte im Anschreiben bitte eigenständig.</p>}
             {!saved && <p className="mb-5 rounded-lg border border-[#ddd9d0] bg-[#f8f7f3] px-4 py-3 text-sm text-[#696c65]">Die PDF-Vorschau steht bereit, sobald du das Anschreiben einmal gespeichert hast.</p>}
+            {address_incomplete && <p role="status" className="mb-5 rounded-lg border border-[#e8cf9e] bg-[#fff8e8] px-4 py-3 text-sm text-[#795516]">Die Empfängeranschrift ist noch unvollständig. Bitte Straße, Postleitzahl und Ort ergänzen und das Anschreiben erneut speichern.</p>}
             {needs_review && <p role="status" className="mb-5 rounded-lg border border-[#e8cf9e] bg-[#fff8e8] px-4 py-3 text-sm text-[#795516]">Die Immobiliendaten wurden nach dem letzten Speichern dieses Anschreibens geändert. Bitte Texte und Werte prüfen und das Schreiben erneut speichern, bevor du die PDF herunterlädst.</p>}
 
             <form onSubmit={submit} className="space-y-6">
                 <section className="rounded-xl border border-[#ddd9d0] bg-white p-5 shadow-sm sm:p-6">
                     <h2 className="mb-4 text-lg font-semibold text-[#172741]">01 · Empfänger und Ansprechpartner</h2>
                     <div className="grid gap-4 sm:grid-cols-2">
-                        <TextField title="Empfänger / Anschriftzeile *" name="recipient_name" value={data.recipient_name} setData={setData} errors={errors} maxLength={180} required />
+                        <div className="sm:col-span-2">
+                            <p className="mb-2 text-xs leading-5 text-[#777a72]">Hier die <strong>Postanschrift des Empfängers</strong> eintragen – nicht automatisch die Adresse der bewerteten Immobilie.</p>
+                        </div>
+                        <TextField title="Empfängername *" name="recipient_name" value={data.recipient_name} setData={setData} errors={errors} maxLength={180} required />
+                        <TextField title="Straße und Hausnummer *" name="recipient_street" value={data.recipient_street} setData={setData} errors={errors} maxLength={255} required placeholder="z. B. Musterstraße 12" />
+                        <TextField title="Postleitzahl *" name="recipient_zip" value={data.recipient_zip} setData={setData} errors={errors} maxLength={20} required placeholder="40721" />
+                        <TextField title="Ort *" name="recipient_city" value={data.recipient_city} setData={setData} errors={errors} maxLength={255} required placeholder="Hilden" />
                         <TextField title="Datum des Anschreibens *" name="issued_on" type="date" value={data.issued_on} setData={setData} errors={errors} required />
                         <TextField title="Ansprechpartner *" name="adviser_name" value={data.adviser_name} setData={setData} errors={errors} maxLength={120} required />
                         <TextField title="Funktion" name="adviser_role" value={data.adviser_role} setData={setData} errors={errors} maxLength={80} />
@@ -205,8 +212,8 @@ export default function ValuationLetterEdit({ lead, fields, saved = false, needs
                     <button type="submit" disabled={processing || anyPhotoProcessing || Object.values(photoErrors).some(Boolean)} className="rounded-md bg-[#b44637] px-6 py-3 text-sm font-semibold text-white hover:bg-[#963b2f] disabled:opacity-60">
                         {processing ? 'Wird gespeichert …' : anyPhotoProcessing ? 'Fotos werden vorbereitet …' : 'Anschreiben speichern'}
                     </button>
-                    {saved && !needs_review && <a href={preview_url} target="_blank" rel="noopener noreferrer" className="rounded-md border border-[#172741] px-4 py-3 text-sm font-semibold text-[#172741]">PDF-Vorschau</a>}
-                    {saved && !needs_review && <a href={download_url} className="rounded-md border border-[#172741] px-4 py-3 text-sm font-semibold text-[#172741]">PDF herunterladen</a>}
+                    {saved && !needs_review && !address_incomplete && <a href={preview_url} target="_blank" rel="noopener noreferrer" className="rounded-md border border-[#172741] px-4 py-3 text-sm font-semibold text-[#172741]">PDF-Vorschau</a>}
+                    {saved && !needs_review && !address_incomplete && <a href={download_url} className="rounded-md border border-[#172741] px-4 py-3 text-sm font-semibold text-[#172741]">PDF herunterladen</a>}
                     {isDirty && <span className="text-xs text-[#a24a3d]">Ungespeicherte Änderungen</span>}
                     {progress && <span className="text-xs text-[#74776f]">Upload: {progress.percentage}%</span>}
                 </div>
