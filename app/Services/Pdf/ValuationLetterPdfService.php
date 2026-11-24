@@ -26,12 +26,12 @@ class ValuationLetterPdfService
             $photos[$slot] = $disk->path($path);
         }
 
-        // Refer to our own SVG assets as local files: Dompdf releases differ in
-        // their support for SVG data URIs. Explicitly limit chroot to this app.
-        $brand = [];
-        foreach (['logo', 'watermark'] as $asset) {
-            $brand[$asset] = resource_path('valuation-letter/brand/'.$asset.'.svg');
-        }
+        // Use the original 2 COME HOME PNG already stored in the repository.
+        // It is identical to the supplied logo, rather than the old traced SVG.
+        $brand = [
+            'logo' => public_path('images/logo-2comehome.png'),
+            'watermark' => resource_path('valuation-letter/brand/watermark.svg'),
+        ];
 
         $livingArea = (float) ($lead->property?->living_area ?? 0);
         $pricePerSquareMeter = $livingArea > 0 ? [

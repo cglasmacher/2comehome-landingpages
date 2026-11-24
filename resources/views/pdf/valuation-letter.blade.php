@@ -11,11 +11,12 @@
         .page { position: relative; width: 595pt; height: 841pt; page-break-after: always; overflow: hidden; }
         .page:last-child { page-break-after: auto; }
         .watermark { position: absolute; left: 143.75pt; top: 159pt; width: 315pt; height: 580pt; }
-        .logo { position: absolute; left: 388.6pt; top: 28.35pt; width: 142.4pt; height: 107.3pt; }
-        .page-two .logo { left: 411pt; top: 28.35pt; width: 141.7pt; height: 103.5pt; }
+        .logo { position: absolute; left: 388.6pt; top: 28.35pt; width: 142.4pt; height: 110.5pt; }
+        .page-two .logo { left: 411pt; top: 28.35pt; width: 141.7pt; height: 110pt; }
         .block { position: absolute; z-index: 1; }
         .sender { left: 70.8pt; top: 164pt; width: 294pt; color: #9c563b; font-size: 7.9pt; }
-        .recipient { left: 70.8pt; top: 180pt; width: 300pt; font-size: 11pt; line-height: 1.2; }
+        .recipient { left: 70.8pt; top: 180pt; width: 300pt; font-size: 11pt; line-height: 1.28; }
+        .recipient div { margin: 0; padding: 0; }
         .agent { left: 389.8pt; top: 162pt; width: 175pt; font-family: Georgia, "DejaVu Serif", serif; font-size: 7.9pt; line-height: 1.42; }
         .agent .agent-title { font-size: 10.5pt; }
         .date { left: 389.8pt; top: 247pt; font-size: 11pt; }
@@ -69,7 +70,11 @@
     <img src="{{ $brand['watermark'] }}" class="watermark" alt="">
     <img src="{{ $brand['logo'] }}" class="logo" alt="2 COME HOME Immobilien">
     <div class="block sender">{{ $company['company'] }} | Markt 14-16 | {{ $company['postcode_city'] }}</div>
-    <div class="block recipient">{{ $letter->recipient_name }}</div>
+    <div class="block recipient">
+        <div>{{ $letter->recipient_name }}</div>
+        @if($letter->recipient_street)<div>{{ $letter->recipient_street }}</div>@endif
+        @if($letter->recipient_zip || $letter->recipient_city)<div>{{ trim($letter->recipient_zip.' '.$letter->recipient_city) }}</div>@endif
+    </div>
     <div class="block agent">
         <div class="agent-title"><strong>Ihr Ansprechpartner:</strong></div>
         <div>{{ $letter->adviser_name }}</div>
