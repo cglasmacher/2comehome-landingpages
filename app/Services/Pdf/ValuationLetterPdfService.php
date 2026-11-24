@@ -26,10 +26,11 @@ class ValuationLetterPdfService
             $photos[$slot] = 'data:image/jpeg;base64,'.base64_encode($disk->get($path));
         }
 
+        // Refer to our own SVG assets as local files: Dompdf releases differ in
+        // their support for SVG data URIs. Explicitly limit chroot to this app.
         $brand = [];
         foreach (['logo', 'watermark'] as $asset) {
-            $svg = file_get_contents(resource_path('valuation-letter/brand/'.$asset.'.svg'));
-            $brand[$asset] = 'data:image/svg+xml;base64,'.base64_encode($svg);
+            $brand[$asset] = resource_path('valuation-letter/brand/'.$asset.'.svg');
         }
 
         $livingArea = (float) ($lead->property?->living_area ?? 0);
@@ -47,6 +48,7 @@ class ValuationLetterPdfService
             'pricePerSquareMeter' => $pricePerSquareMeter,
         ])
             ->setPaper('a4')
+            ->setOption('chroot', base_path())
             ->setOption('isRemoteEnabled', false)
             ->output();
     }
