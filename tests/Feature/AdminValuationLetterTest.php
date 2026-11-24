@@ -60,6 +60,9 @@ class AdminValuationLetterTest extends TestCase
     {
         return [
             'recipient_name' => 'Frau und Herr Mustermann',
+            'recipient_street' => 'Musterstraße 8',
+            'recipient_zip' => '40723',
+            'recipient_city' => 'Hilden',
             'adviser_name' => 'Maximilian Schäfer',
             'adviser_role' => 'Immobilienmakler',
             'adviser_mobile' => '+49 174 4973777',
@@ -92,6 +95,9 @@ class AdminValuationLetterTest extends TestCase
         $this->assertDatabaseHas('valuation_letters', [
             'lead_id' => $lead->id,
             'recipient_name' => 'Frau und Herr Mustermann',
+            'recipient_street' => 'Musterstraße 8',
+            'recipient_zip' => '40723',
+            'recipient_city' => 'Hilden',
             'property_label' => 'Eigentumswohnung',
             'value_low' => 160000,
             'value_high' => 165000,
@@ -163,6 +169,43 @@ class AdminValuationLetterTest extends TestCase
         $this->get(route('admin.leads.letter.preview', $lead))->assertStatus(409);
         $this->post(route('admin.leads.letter.store', $lead), $this->letterData())->assertRedirect();
         $this->get(route('admin.leads.letter.preview', $lead))->assertOk();
+    }
+
+    public function test_letter_requires_complete_recipient_address_and_keeps_object_address_separate(): void
+    {
+        $lead = $this->lead();
+        $this->actingAs(User::factory()->create(['is_admin' => true]));
+
+        $missing = $this->letterData();
+        unset($missing['recipient_zip']);
+        $this->post(route('admin.leads.letter.store', $lead), $missing)
+            ->assertSessionHasErrors('recipient_zip');
+
+        $this->post(route('admin.leads.letter.store', $lead), $this->letterData())
+            ->assertRedirect();
+
+        $letter = $lead->valuationLetter()->firstOrFail();
+        $html = view('pdf.valuation-letter', [
+            'lead' => $lead->load('property'),
+            'letter' => $letter,
+            'brand' => [
+                'logo' => public_path('images/logo-2comehome.png'),
+                'watermark' => resource_path('valuation-letter/brand/watermark.svg'),
+            ],
+            'company' => config('valuation_letter'),
+            'photos' => [],
+            'pricePerSquareMeter' => null,
+        ])->render();
+
+        $this->assertStringContainsString('Musterstraße 8', $html);
+        $this->assertStringContainsString('40723 Hilden', $html);
+        $this->assertStringContainsString('Teststraße 12', $html);
+        $this->assertFileExists(public_path('images/logo-2comehome.png'));
+
+        // An old letter without these newly introduced fields cannot be issued again.
+        $letter->update(['recipient_street' => null]);
+        $this->get(route('admin.leads.letter.preview', $lead))->assertStatus(409);
+        $this->get(route('admin.leads.letter.download', $lead))->assertStatus(409);
     }
 
     public function test_non_admin_cannot_read_or_write_valuation_letters(): void
