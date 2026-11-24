@@ -37,6 +37,7 @@ class AdminLeadController extends Controller
             'lead' => [
                 'id' => $lead->id,
                 'uuid' => $lead->uuid,
+                'letter_exists' => $lead->valuationLetter()->exists(),
                 'first_name' => $lead->first_name,
                 'last_name' => $lead->last_name,
                 'email' => $lead->email,
