@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\AdminBrokerageContractController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminLeadController;
+use App\Http\Controllers\Admin\AdminValuationLetterController;
 use App\Http\Controllers\Admin\AdminSignatureController;
 use App\Http\Controllers\ContractSigningController;
 use App\Http\Controllers\LandingPageController;
@@ -37,6 +38,12 @@ Route::domain(config('landingpages.public_domain'))->group(function () {
         Route::post('/contracts/{contract}/revoke', [AdminBrokerageContractController::class, 'revoke'])->name('contracts.revoke');
 
         Route::get('/leads/{lead}/edit', [AdminLeadController::class, 'edit'])->name('leads.edit');
+
+        Route::get('/leads/{lead}/anschreiben', [AdminValuationLetterController::class, 'edit'])->name('leads.letter.edit');
+        Route::post('/leads/{lead}/anschreiben', [AdminValuationLetterController::class, 'store'])->name('leads.letter.store');
+        Route::get('/leads/{lead}/anschreiben/pdf', [AdminValuationLetterController::class, 'preview'])->name('leads.letter.preview');
+        Route::get('/leads/{lead}/anschreiben/pdf/download', [AdminValuationLetterController::class, 'download'])->name('leads.letter.download');
+        Route::get('/leads/{lead}/anschreiben/foto/{slot}', [AdminValuationLetterController::class, 'photo'])->whereNumber('slot')->name('leads.letter.photo');
         Route::put('/leads/{lead}/valuation', [AdminLeadController::class, 'update'])->name('leads.valuation.update');
         Route::put('/leads/{lead}/property', [AdminLeadController::class, 'updateProperty'])->name('leads.property.update');
         Route::get('/leads/{lead}/pdf', [AdminLeadController::class, 'preview'])->name('leads.pdf.preview');
