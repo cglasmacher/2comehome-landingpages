@@ -15,7 +15,7 @@ function PropertyField({ id, label, error, ...props }) {
 }
 
 export default function LeadPropertyEditor({ leadId, property = {}, propertyTypes = [], valuation = {} }) {
-    const { data, setData, put, processing, errors, isDirty } = useForm({
+    const { data, setData, put, processing, errors, isDirty, defaults } = useForm({
         property_type: property.property_type ?? '',
         street: property.street ?? '',
         house_number: property.house_number ?? '',
@@ -45,7 +45,13 @@ export default function LeadPropertyEditor({ leadId, property = {}, propertyType
 
     const submit = (event) => {
         event.preventDefault();
-        put(route('admin.leads.property.update', leadId), { preserveScroll: true });
+        put(route('admin.leads.property.update', leadId), {
+            preserveScroll: true,
+            onSuccess: () => {
+                defaults({ ...data, recalculate: false });
+                setData('recalculate', false);
+            },
+        });
     };
 
     return (
