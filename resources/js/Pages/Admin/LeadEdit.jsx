@@ -115,7 +115,7 @@ export default function LeadEdit({ lead, contracts = [], property_types = [] }) 
                     <section className="rounded-xl border border-[#ddd9d0] bg-white p-6 shadow-sm">
                         <p className="text-[10px] font-semibold uppercase tracking-[.15em] text-[#8b8d86]">Aktueller Stand</p>
                         <dl className="mt-5 space-y-4">
-                            <div><dt className="text-[11px] text-[#8a8d85]">Orientierungswert</dt><dd className="mt-1 text-xl font-semibold text-[#172741]">{money(valuation.estimated_value)}</dd></div>
+                            <div><dt className="text-[11px] text-[#8a8d85]">{valuation.status === 'stale' ? 'Bisheriger Orientierungswert (veraltet)' : 'Orientierungswert'}</dt><dd className="mt-1 text-xl font-semibold text-[#172741]">{money(valuation.estimated_value)}</dd>{valuation.status === 'stale' && <p className="mt-1 text-xs font-semibold text-[#986319]">Nicht mehr als aktuelle Bewertung verwenden</p>}</div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div><dt className="text-[11px] text-[#8a8d85]">Von</dt><dd className="mt-1 text-sm font-semibold">{money(valuation.range_low)}</dd></div>
                                 <div><dt className="text-[11px] text-[#8a8d85]">Bis</dt><dd className="mt-1 text-sm font-semibold">{money(valuation.range_high)}</dd></div>
