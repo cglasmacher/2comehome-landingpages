@@ -7,7 +7,7 @@ export default function ValuationResult({ valuation, summary, reportUrl, calendl
     const [bookingOpen, setBookingOpen] = useState(false);
     const contact = summary?.contact ?? {};
     const property = summary?.property ?? {};
-    const hasRange = valuation?.status !== 'failed' && Number(valuation?.range_low) > 0 && Number(valuation?.range_high) > 0;
+    const hasRange = !['failed', 'stale'].includes(valuation?.status) && Number(valuation?.range_low) > 0 && Number(valuation?.range_high) > 0;
     const address = [[property.street, property.house_number].filter(Boolean).join(' '), [property.zip, property.city].filter(Boolean).join(' ')].filter(Boolean).join(', ');
     const validCalendar = safeCalendlyUrl(calendlyUrl);
     const details = [
@@ -26,7 +26,7 @@ export default function ValuationResult({ valuation, summary, reportUrl, calendl
                     <section className="estimate-card">
                         <div className="estimate-heading"><p className="eyebrow">Ihre Immobilien-Ersteinschätzung</p><Icon name="home" size={28} /></div>
                         <h2>{hasRange ? 'Eine erste Orientierung für Sie.' : 'Wir schauen persönlich genauer hin.'}</h2>
-                        {hasRange ? <div className="estimate-numbers"><strong>{formatCurrency(valuation.range_low)}</strong><span>bis</span><strong>{formatCurrency(valuation.range_high)}</strong></div> : <p className="estimate-pending">Eine automatische Einschätzung ist derzeit nicht verfügbar. Ihre Anfrage liegt uns vor – wir prüfen die Angaben persönlich.</p>}
+                        {hasRange ? <div className="estimate-numbers"><strong>{formatCurrency(valuation.range_low)}</strong><span>bis</span><strong>{formatCurrency(valuation.range_high)}</strong></div> : <p className="estimate-pending">{valuation?.status === 'stale' ? 'Die Objektdaten wurden aktualisiert. Die Bewertung wird derzeit überprüft.' : 'Eine automatische Einschätzung ist derzeit nicht verfügbar. Ihre Anfrage liegt uns vor – wir prüfen die Angaben persönlich.'}</p>}
                         {hasRange && <div className="estimate-bar" aria-hidden="true"><i /><b /><i /></div>}
                         {hasRange && valuation.source_label && <p className="estimate-disclaimer">Bewertungsquelle: {valuation.source_label}</p>}
                         <p className="estimate-disclaimer">Unverbindliche, automatisierte Ersteinschätzung. Sie ersetzt keine persönliche Marktanalyse und ist keine verbindliche Verkehrswertermittlung. Für eine zielführende Wertermittlung erheben wir die notwendigen Daten zu Ihrer Immobilie in einem persönlichen Gespräch.</p>

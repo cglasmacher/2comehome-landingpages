@@ -1,5 +1,6 @@
 import { Link, useForm, usePage } from '@inertiajs/react';
 import AdminLayout from '@/Components/Admin/AdminLayout';
+import LeadPropertyEditor from '@/Components/Admin/LeadPropertyEditor';
 import { route } from 'ziggy-js';
 
 const money = (value) => {
@@ -7,7 +8,7 @@ const money = (value) => {
     return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(Number(value));
 };
 
-export default function LeadEdit({ lead, contracts = [] }) {
+export default function LeadEdit({ lead, contracts = [], property_types = [] }) {
     const { flash } = usePage().props;
     const valuation = lead.valuation ?? {};
 
@@ -61,7 +62,8 @@ export default function LeadEdit({ lead, contracts = [] }) {
                 </div>
             </div>
 
-            {flash?.success && <div className="mb-6 rounded-lg border border-[#b9d1b9] bg-[#f0f7ef] px-4 py-3 text-sm text-[#426145]">{flash.success}</div>}
+            {flash?.success && <div role="status" className="mb-6 rounded-lg border border-[#b9d1b9] bg-[#f0f7ef] px-4 py-3 text-sm text-[#426145]">{flash.success}</div>}
+            {flash?.warning && <div role="status" className="mb-6 rounded-lg border border-[#e8cf9e] bg-[#fff9eb] px-4 py-3 text-sm text-[#795516]">{flash.warning}</div>}
 
             <section className="mb-6 rounded-xl border border-[#ddd9d0] bg-white p-6 shadow-sm">
                 <div className="flex flex-wrap items-center justify-between gap-4">
@@ -73,12 +75,14 @@ export default function LeadEdit({ lead, contracts = [] }) {
                 </Link>)}</div> : <p className="mt-5 text-sm text-[#74776f]">Noch kein Maklerauftrag angelegt.</p>}
             </section>
 
+            <LeadPropertyEditor leadId={lead.id} property={lead.property} propertyTypes={property_types} valuation={valuation} />
+
             <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(340px,.65fr)]">
                 <section className="rounded-xl border border-[#ddd9d0] bg-white p-6 shadow-sm">
                     <div className="mb-6 border-b border-[#ebe8e1] pb-5">
                         <p className="text-[10px] font-semibold uppercase tracking-[.15em] text-[#8b8d86]">Manuelle Bewertung</p>
                         <h2 className="mt-2 text-xl font-semibold text-[#172741]">Werte bearbeiten</h2>
-                        <p className="mt-2 text-xs leading-5 text-[#74776f]">Nach dem Speichern werden Ergebnisansicht und neu erzeugte PDFs mit diesen Werten ausgegeben.</p>
+                        <p className="mt-2 text-xs leading-5 text-[#74776f]">Nach dem Speichern werden Ergebnisansicht und neu erzeugte PDFs mit diesen Werten ausgegeben. Mit einer manuellen Bewertung wird auch der Hinweis auf veraltete Objektdaten aufgehoben.</p>
                     </div>
 
                     <form onSubmit={submit} className="space-y-5">
@@ -111,7 +115,7 @@ export default function LeadEdit({ lead, contracts = [] }) {
                     <section className="rounded-xl border border-[#ddd9d0] bg-white p-6 shadow-sm">
                         <p className="text-[10px] font-semibold uppercase tracking-[.15em] text-[#8b8d86]">Aktueller Stand</p>
                         <dl className="mt-5 space-y-4">
-                            <div><dt className="text-[11px] text-[#8a8d85]">Orientierungswert</dt><dd className="mt-1 text-xl font-semibold text-[#172741]">{money(valuation.estimated_value)}</dd></div>
+                            <div><dt className="text-[11px] text-[#8a8d85]">{valuation.status === 'stale' ? 'Bisheriger Orientierungswert (veraltet)' : 'Orientierungswert'}</dt><dd className="mt-1 text-xl font-semibold text-[#172741]">{money(valuation.estimated_value)}</dd>{valuation.status === 'stale' && <p className="mt-1 text-xs font-semibold text-[#986319]">Nicht mehr als aktuelle Bewertung verwenden</p>}</div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div><dt className="text-[11px] text-[#8a8d85]">Von</dt><dd className="mt-1 text-sm font-semibold">{money(valuation.range_low)}</dd></div>
                                 <div><dt className="text-[11px] text-[#8a8d85]">Bis</dt><dd className="mt-1 text-sm font-semibold">{money(valuation.range_high)}</dd></div>

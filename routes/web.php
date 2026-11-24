@@ -38,6 +38,7 @@ Route::domain(config('landingpages.public_domain'))->group(function () {
 
         Route::get('/leads/{lead}/edit', [AdminLeadController::class, 'edit'])->name('leads.edit');
         Route::put('/leads/{lead}/valuation', [AdminLeadController::class, 'update'])->name('leads.valuation.update');
+        Route::put('/leads/{lead}/property', [AdminLeadController::class, 'updateProperty'])->name('leads.property.update');
         Route::get('/leads/{lead}/pdf', [AdminLeadController::class, 'preview'])->name('leads.pdf.preview');
         Route::get('/leads/{lead}/pdf/download', [AdminLeadController::class, 'download'])->name('leads.pdf.download');
         Route::get('/leads/{lead}/final-pdf', [AdminLeadController::class, 'finalPreview'])->name('leads.final-pdf.preview');

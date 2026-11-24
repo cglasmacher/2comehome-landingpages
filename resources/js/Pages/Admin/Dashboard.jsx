@@ -67,8 +67,8 @@ export default function Dashboard({ leads, filters }) {
                                         <div className="mt-1 text-[#9a9c95]">{lead.landing_page_slug}</div>
                                     </td>
                                     <td className="px-5 py-4 align-top">
-                                        <div className="font-semibold text-[#172741]">{money(lead.valuation.estimated_value)}</div>
-                                        <div className="mt-1 text-xs text-[#777a72]">{money(lead.valuation.range_low)} – {money(lead.valuation.range_high)}</div>
+                                        <div className="font-semibold text-[#172741]">{lead.valuation.status === 'stale' ? 'Bewertung prüfen' : money(lead.valuation.estimated_value)}</div>
+                                        <div className="mt-1 text-xs text-[#777a72]">{lead.valuation.status === 'stale' ? 'Objektdaten geändert' : `${money(lead.valuation.range_low)} – ${money(lead.valuation.range_high)}`}</div>
                                     </td>
                                     <td className="px-5 py-4 align-top text-xs text-[#666b65]">{lead.valuation.source_label || '—'}</td>
                                     <td className="px-5 py-4 align-top text-xs text-[#666b65]">
