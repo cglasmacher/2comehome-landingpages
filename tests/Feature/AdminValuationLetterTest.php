@@ -208,6 +208,37 @@ class AdminValuationLetterTest extends TestCase
         $this->get(route('admin.leads.letter.download', $lead))->assertStatus(409);
     }
 
+    public function test_letter_uses_landing_page_serif_typography_without_wrapping_section_headings(): void
+    {
+        $lead = $this->lead();
+        $this->actingAs(User::factory()->create(['is_admin' => true]));
+
+        $this->post(route('admin.leads.letter.store', $lead), $this->letterData())
+            ->assertRedirect();
+
+        $html = view('pdf.valuation-letter', [
+            'lead' => $lead->load('property'),
+            'letter' => $lead->valuationLetter()->firstOrFail(),
+            'brand' => [
+                'logo' => public_path('images/logo-2comehome.png'),
+                'watermark' => resource_path('valuation-letter/brand/watermark.svg'),
+            ],
+            'company' => config('valuation_letter'),
+            'photos' => [],
+            'pricePerSquareMeter' => ['low' => 2000, 'high' => 2250],
+        ])->render();
+
+        // The landingpage's editorial serif and lighter headings carry through to
+        // this separate two-page PDF, with sufficient widths for long section titles.
+        $this->assertStringContainsString('font-family: Georgia, "DejaVu Serif", serif', $html);
+        $this->assertStringContainsString('font-weight: 400; line-height: 1.17', $html);
+        $this->assertStringContainsString('top: 173pt; width: 465pt', $html);
+        $this->assertStringContainsString('top: 15pt; width: 122pt; height: 95pt', $html);
+
+        $pdf = $this->get(route('admin.leads.letter.preview', $lead))->assertOk();
+        $this->assertStringStartsWith('%PDF-', $pdf->getContent());
+    }
+
     public function test_non_admin_cannot_read_or_write_valuation_letters(): void
     {
         $lead = $this->lead();
