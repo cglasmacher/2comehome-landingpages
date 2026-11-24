@@ -29,14 +29,14 @@ function TextArea({ title, name, value, setData, errors, hint, rows = 4, maxLeng
     );
 }
 
-export default function ValuationLetterEdit({ lead, fields, saved = false, photos = {}, preview_url, download_url }) {
+export default function ValuationLetterEdit({ lead, fields, saved = false, needs_review = false, photos = {}, preview_url, download_url }) {
     const { flash } = usePage().props;
-    const defaults = { ...fields };
+    const initialData = { ...fields };
     for (let slot = 1; slot <= 4; slot++) {
-        defaults['photo_' + slot] = null;
-        defaults['remove_photo_' + slot] = false;
+        initialData['photo_' + slot] = null;
+        initialData['remove_photo_' + slot] = false;
     }
-    const { data, setData, post, processing, errors, progress, isDirty } = useForm(defaults);
+    const { data, setData, post, processing, errors, progress, isDirty, defaults } = useForm(initialData);
 
     const submit = (event) => {
         event.preventDefault();
@@ -44,9 +44,13 @@ export default function ValuationLetterEdit({ lead, fields, saved = false, photo
             preserveScroll: true,
             forceFormData: true,
             onSuccess: () => {
+                const updated = { ...data };
                 for (let slot = 1; slot <= 4; slot++) {
-                    setData('photo_' + slot, null);
+                    updated['photo_' + slot] = null;
+                    updated['remove_photo_' + slot] = false;
                 }
+                setData(updated);
+                defaults(updated);
             },
         });
     };
@@ -67,7 +71,7 @@ export default function ValuationLetterEdit({ lead, fields, saved = false, photo
                     <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[#74776f]">Zweiseitiger Brief nach der vorgegebenen Vorlage mit Firmenlogo, Wasserzeichen, Ansprechpartner, Objektbeschreibung, Marktwert und vier Fotos. Die Werte sind unabhängig von der automatischen Ersteinschätzung editierbar.</p>
                     <p className="mt-2 text-xs text-[#8b8d86]">{lead.name || 'Lead #' + lead.id} · {lead.address || 'Adresse noch ergänzen'}</p>
                 </div>
-                {saved && (
+                {saved && !needs_review && (
                     <div className="flex flex-wrap gap-2">
                         <a href={preview_url} target="_blank" rel="noopener noreferrer" className="rounded-md border border-[#172741] px-4 py-2.5 text-sm font-semibold text-[#172741]">PDF ansehen</a>
                         <a href={download_url} className="rounded-md bg-[#172741] px-4 py-2.5 text-sm font-semibold text-white">PDF herunterladen</a>
@@ -78,6 +82,7 @@ export default function ValuationLetterEdit({ lead, fields, saved = false, photo
             {flash?.success && <div role="status" className="mb-5 rounded-lg border border-[#b9d1b9] bg-[#f0f7ef] px-4 py-3 text-sm text-[#426145]">{flash.success}</div>}
             {lead.source_status === 'stale' && <p className="mb-5 rounded-lg border border-[#e8cf9e] bg-[#fff8e8] px-4 py-3 text-sm text-[#795516]">Die automatische Einwertung ist aktuell als veraltet markiert. Prüfe die Marktwerte im Anschreiben bitte eigenständig.</p>}
             {!saved && <p className="mb-5 rounded-lg border border-[#ddd9d0] bg-[#f8f7f3] px-4 py-3 text-sm text-[#696c65]">Die PDF-Vorschau steht bereit, sobald du das Anschreiben einmal gespeichert hast.</p>}
+            {needs_review && <p role="status" className="mb-5 rounded-lg border border-[#e8cf9e] bg-[#fff8e8] px-4 py-3 text-sm text-[#795516]">Die Immobiliendaten wurden nach dem letzten Speichern dieses Anschreibens geändert. Bitte Texte und Werte prüfen und das Schreiben erneut speichern, bevor du die PDF herunterlädst.</p>}
 
             <form onSubmit={submit} className="space-y-6">
                 <section className="rounded-xl border border-[#ddd9d0] bg-white p-5 shadow-sm sm:p-6">
@@ -157,8 +162,8 @@ export default function ValuationLetterEdit({ lead, fields, saved = false, photo
                     <button type="submit" disabled={processing} className="rounded-md bg-[#b44637] px-6 py-3 text-sm font-semibold text-white hover:bg-[#963b2f] disabled:opacity-60">
                         {processing ? 'Wird gespeichert …' : 'Anschreiben speichern'}
                     </button>
-                    {saved && <a href={preview_url} target="_blank" rel="noopener noreferrer" className="rounded-md border border-[#172741] px-4 py-3 text-sm font-semibold text-[#172741]">PDF-Vorschau</a>}
-                    {saved && <a href={download_url} className="rounded-md border border-[#172741] px-4 py-3 text-sm font-semibold text-[#172741]">PDF herunterladen</a>}
+                    {saved && !needs_review && <a href={preview_url} target="_blank" rel="noopener noreferrer" className="rounded-md border border-[#172741] px-4 py-3 text-sm font-semibold text-[#172741]">PDF-Vorschau</a>}
+                    {saved && !needs_review && <a href={download_url} className="rounded-md border border-[#172741] px-4 py-3 text-sm font-semibold text-[#172741]">PDF herunterladen</a>}
                     {isDirty && <span className="text-xs text-[#a24a3d]">Ungespeicherte Änderungen</span>}
                     {progress && <span className="text-xs text-[#74776f]">Upload: {progress.percentage}%</span>}
                 </div>
