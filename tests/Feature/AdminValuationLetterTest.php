@@ -98,7 +98,7 @@ class AdminValuationLetterTest extends TestCase
         ]);
 
         $pdf = $this->get(route('admin.leads.letter.preview', $lead))->assertOk();
-        $this->assertStringStartsWith('%PDF-', $pdf->streamedContent());
+        $this->assertStringStartsWith('%PDF-', $pdf->getContent());
 
         $download = $this->get(route('admin.leads.letter.download', $lead))->assertOk();
         $this->assertStringContainsString('attachment;', $download->headers->get('Content-Disposition'));
