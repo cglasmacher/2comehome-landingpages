@@ -3,10 +3,14 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\UpdateLeadPropertyRequest;
 use App\Models\Lead;
 use App\Services\Pdf\ValuationReportPdfService;
+use App\Services\Valuation\ValuationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\Response as HttpResponse;
@@ -18,6 +22,12 @@ class AdminLeadController extends Controller
         $lead->load(['landingPage', 'property', 'valuation', 'latestOnOfficeSync']);
 
         return Inertia::render('Admin/LeadEdit', [
+            'property_types' => collect(config('landingpages.property_types', []))
+                ->filter(fn (array $type, string $key) => ($type['selectable'] ?? true) === true
+                    || $key === $lead->property?->property_type)
+                ->map(fn (array $type, string $key) => ['value' => $key, 'label' => $type['label'] ?? ucfirst($key)])
+                ->values()
+                ->all(),
             'contracts' => $lead->brokerageContracts()->latest()->get()->map(fn ($contract) => [
                 'id' => $contract->id, 'status' => $contract->status,
                 'offer_price' => $contract->offer_price,
@@ -70,6 +80,103 @@ class AdminLeadController extends Controller
                 'final_pdf_download_url' => route('admin.leads.final-pdf.download', $lead),
             ],
         ]);
+    }
+
+    /**
+     * Update only the submitted property attributes. Existing valuations are not
+     * silently reused against changed inputs, and previously sent e-mails remain untouched.
+     */
+    public function updateProperty(UpdateLeadPropertyRequest $request, Lead $lead, ValuationService $valuationService): RedirectResponse
+    {
+        $data = $request->validated();
+        $recalculate = (bool) ($data['recalculate'] ?? false);
+        unset($data['recalculate']);
+
+        // Keep the stored payload aligned with the public valuation form.
+        if ($data['property_type'] === 'wohnung') {
+            $data['plot_area'] = null;
+        }
+        if ($data['property_type'] !== 'mehrfamilienhaus') {
+            $data['number_of_units'] = null;
+        }
+
+        $fields = [
+            'property_type', 'street', 'house_number', 'zip', 'city', 'country',
+            'construction_year', 'living_area', 'plot_area', 'rooms', 'number_of_units',
+        ];
+        $values = array_replace(array_fill_keys($fields, null), $data);
+        $property = $lead->property()->firstOrNew([]);
+        $property->fill($values);
+
+        $hasChanges = ! $property->exists || $property->isDirty();
+        $changedFields = array_keys($property->getDirty());
+
+        if ($hasChanges) {
+            DB::transaction(function () use ($lead, $property, $request, $changedFields): void {
+                $property->save();
+                $valuation = $lead->valuation()->first();
+
+                if ($valuation) {
+                    $response = is_array($valuation->provider_response) ? $valuation->provider_response : [];
+                    $response['property_edit'] = [
+                        'changed_at' => now()->toIso8601String(),
+                        'changed_by' => $request->user()->id,
+                        'changed_fields' => $changedFields,
+                        'previous_status' => $valuation->status,
+                    ];
+                    $valuation->update([
+                        'status' => 'stale',
+                        'provider_response' => $response,
+                        'error_message' => 'Die Objektdaten wurden geändert. Bewertung muss aktualisiert werden.',
+                    ]);
+                }
+            });
+
+            Log::info('admin lead property updated', [
+                'lead_id' => $lead->id,
+                'user_id' => $request->user()->id,
+                'changed_fields' => $changedFields,
+            ]);
+        }
+
+        if ($recalculate) {
+            // An explicit action only: external calls can cost credits and overwrite manual valuations.
+            $lead = $lead->fresh(['property', 'landingPage']);
+            $rangePercent = (float) ($lead->landingPage?->valuation_range_percent
+                ?: config('landingpages.default_range_percent', 7.5));
+            $result = $valuationService->createForLead($lead, $rangePercent);
+
+            if ($result->status !== 'completed') {
+                // Do not replace a previously saved value with an unsuccessful provider result.
+                return back()->with('warning', 'Objektdaten gespeichert. Eine neue Bewertung war nicht möglich. Bitte den Schätzwert manuell prüfen und speichern.');
+            }
+
+            $lead->valuation()->updateOrCreate([], [
+                'provider' => $result->provider,
+                'estimated_value' => $result->estimatedValue,
+                'range_percent' => $result->rangePercent,
+                'range_low' => $result->rangeLow,
+                'range_high' => $result->rangeHigh,
+                'status' => $result->status,
+                'provider_payload' => null,
+                'provider_response' => array_merge($result->rawResponse, [
+                    'admin_recalculation' => [
+                        'by' => $request->user()->id,
+                        'at' => now()->toIso8601String(),
+                    ],
+                ]),
+                'error_message' => null,
+            ]);
+
+            return back()->with('success', 'Objektdaten gespeichert und Bewertung neu berechnet. PDFs verwenden ab sofort die aktuellen Werte.');
+        }
+
+        return back()->with(
+            $hasChanges ? 'warning' : 'success',
+            $hasChanges
+                ? 'Objektdaten gespeichert. Die bisherige Bewertung ist als veraltet markiert. Bitte die Bewertung manuell aktualisieren oder neu berechnen. onOffice wird nicht automatisch synchronisiert.'
+                : 'Keine Änderungen an den Objektdaten.',
+        );
     }
 
     public function update(Request $request, Lead $lead): RedirectResponse
