@@ -67,8 +67,9 @@ class AdminValuationLetterController extends Controller
         $createdPaths = [];
         $oldPaths = [];
 
-        for ($slot = 1; $slot <= 4; $slot++) {
-            $key = (string) $slot;
+        try {
+            for ($slot = 1; $slot <= 4; $slot++) {
+                $key = (string) $slot;
             $old = $paths[$key] ?? null;
             $remove = $request->boolean('remove_photo_'.$slot);
             unset($values['remove_photo_'.$slot], $values['photo_'.$slot]);
@@ -85,9 +86,8 @@ class AdminValuationLetterController extends Controller
                 $oldPaths[] = $old;
                 unset($paths[$key]);
             }
-        }
+            }
 
-        try {
             DB::transaction(function () use ($lead, $values, $paths, $request): void {
                 $lead->valuationLetter()->updateOrCreate([], [
                     ...$values,
@@ -96,7 +96,9 @@ class AdminValuationLetterController extends Controller
                 ]);
             });
         } catch (Throwable $error) {
-            Storage::disk('local')->delete($createdPaths);
+            if ($createdPaths !== []) {
+                Storage::disk('local')->delete($createdPaths);
+            }
             throw $error;
         }
 
@@ -165,7 +167,7 @@ class AdminValuationLetterController extends Controller
             'room_summary' => $property?->rooms ? $property->rooms.' Zimmer' : '',
             'object_description' => 'Bei der zu bewertenden Immobilie handelt es sich um eine '. $type
                 .($location !== '' ? ' in '.$location : '').'. Die angegebene Wohnfläche beträgt '.$area.'.'
-                ."\n\n".'Bitte ergänzen Sie hier Lage innerhalb des Gebäudes, Raumaufteilung, Ausstattung und weitere Besonderheiten anhand der tatsächlichen Objektdaten.',
+                ."\n\n".'Zur weiteren Einordnung sind insbesondere Zustand, Ausstattungsqualität und objektspezifische Besonderheiten zu berücksichtigen.',
             'market_description' => 'Unter Berücksichtigung der Wohnfläche, der Objektart, der Lage und des örtlichen Immobilienmarktes wird für die Immobilie folgende marktbezogene Preisspanne eingeschätzt:',
             'value_low' => $low ?? '',
             'value_high' => $high ?? '',
