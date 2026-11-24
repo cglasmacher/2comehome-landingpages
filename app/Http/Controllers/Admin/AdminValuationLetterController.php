@@ -72,22 +72,22 @@ class AdminValuationLetterController extends Controller
         try {
             for ($slot = 1; $slot <= 4; $slot++) {
                 $key = (string) $slot;
-            $old = $paths[$key] ?? null;
-            $remove = $request->boolean('remove_photo_'.$slot);
-            unset($values['remove_photo_'.$slot], $values['photo_'.$slot]);
+                $old = $paths[$key] ?? null;
+                $remove = $request->boolean('remove_photo_'.$slot);
+                unset($values['remove_photo_'.$slot], $values['photo_'.$slot]);
 
-            if ($request->hasFile('photo_'.$slot)) {
-                // New upload takes precedence over an existing-photo deletion.
-                $path = $this->storePhoto($lead, $slot, $request->file('photo_'.$slot));
-                $createdPaths[] = $path;
-                $paths[$key] = $path;
-                if ($old) {
+                if ($request->hasFile('photo_'.$slot)) {
+                    // A replacement takes precedence over an existing-photo deletion.
+                    $path = $this->storePhoto($lead, $slot, $request->file('photo_'.$slot));
+                    $createdPaths[] = $path;
+                    $paths[$key] = $path;
+                    if ($old) {
+                        $oldPaths[] = $old;
+                    }
+                } elseif ($remove && $old) {
                     $oldPaths[] = $old;
+                    unset($paths[$key]);
                 }
-            } elseif ($remove && $old) {
-                $oldPaths[] = $old;
-                unset($paths[$key]);
-            }
             }
 
             DB::transaction(function () use ($lead, $values, $paths, $request): void {
@@ -189,6 +189,24 @@ class AdminValuationLetterController extends Controller
             throw \Illuminate\Validation\ValidationException::withMessages([
                 'photo_'.$slot => 'Das Foto konnte nicht gelesen werden.',
             ]);
+        }
+
+        // Respect the EXIF orientation of smartphone photos before cropping.
+        if ($file->getMimeType() === 'image/jpeg' && function_exists('exif_read_data')) {
+            $exif = @exif_read_data($file->getRealPath());
+            $degrees = match ((int) ($exif['Orientation'] ?? 1)) {
+                3 => 180,
+                6 => 270,
+                8 => 90,
+                default => 0,
+            };
+            if ($degrees !== 0) {
+                $rotated = imagerotate($source, $degrees, 0);
+                if ($rotated) {
+                    imagedestroy($source);
+                    $source = $rotated;
+                }
+            }
         }
 
         // Mirror the original four-photo composition, normalizing the output
