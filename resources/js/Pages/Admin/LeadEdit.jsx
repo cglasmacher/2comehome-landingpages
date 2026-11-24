@@ -63,7 +63,7 @@ export default function LeadEdit({ lead, contracts = [], property_types = [] }) 
                         <div className="mb-2 text-[10px] font-semibold uppercase tracking-[.12em] text-[#8a8d85]">Anschreiben · Immobilienbewertung</div>
                         <div className="flex flex-wrap gap-2">
                             <Link href={route('admin.leads.letter.edit', lead.id)} className="rounded-md bg-[#172741] px-3 py-2 text-xs font-semibold text-white hover:bg-[#223a5e]">Erstellen / bearbeiten</Link>
-                            {lead.letter_exists && <><a href={route('admin.leads.letter.preview', lead.id)} target="_blank" rel="noreferrer" className="rounded-md border border-[#172741] px-3 py-2 text-xs font-semibold text-[#172741]">Ansehen</a><a href={route('admin.leads.letter.download', lead.id)} className="rounded-md border border-[#172741] px-3 py-2 text-xs font-semibold text-[#172741]">PDF</a></>}
+                            {lead.letter_exists && !lead.letter_needs_review && <><a href={route('admin.leads.letter.preview', lead.id)} target="_blank" rel="noreferrer" className="rounded-md border border-[#172741] px-3 py-2 text-xs font-semibold text-[#172741]">Ansehen</a><a href={route('admin.leads.letter.download', lead.id)} className="rounded-md border border-[#172741] px-3 py-2 text-xs font-semibold text-[#172741]">PDF</a></>}
                         </div>
                     </div>
                 </div>
