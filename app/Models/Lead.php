@@ -47,6 +47,11 @@ class Lead extends Model
         return $this->hasOne(Valuation::class);
     }
 
+    public function valuationLetter(): HasOne
+    {
+        return $this->hasOne(ValuationLetter::class);
+    }
+
     public function syncLogs(): HasMany
     {
         return $this->hasMany(LeadSyncLog::class);
