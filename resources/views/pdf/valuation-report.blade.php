@@ -299,7 +299,9 @@
         <h2>{{ $isFinalReport ? 'Wertermittlung' : 'Ersteinschätzung' }}</h2>
 
         @if($isFinalReport)
-            @if($valuation?->estimated_value)
+            @if($valuation?->status === 'stale')
+                <p>Die Objektdaten wurden aktualisiert. Die Wertermittlung muss vor einer erneuten Ausgabe geprüft werden.</p>
+            @elseif($valuation?->estimated_value)
                 <div class="valuation-value">
                     {{ number_format((float) $valuation->estimated_value, 0, ',', '.') }} €
                 </div>
@@ -308,7 +310,9 @@
                 <p>Eine abschließende Wertermittlung wurde noch nicht hinterlegt.</p>
             @endif
         @else
-            @if($valuation?->range_low && $valuation?->range_high)
+            @if($valuation?->status === 'stale')
+                <p>Die Objektdaten wurden nachträglich aktualisiert. Die erste Einschätzung wird derzeit überprüft.</p>
+            @elseif($valuation?->range_low && $valuation?->range_high)
                 @if($valuation?->estimated_value)
                     <div class="valuation-value">
                         {{ number_format((float) $valuation->estimated_value, 0, ',', '.') }} €
