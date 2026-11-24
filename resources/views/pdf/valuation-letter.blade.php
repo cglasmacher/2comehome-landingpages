@@ -25,10 +25,10 @@
         .property-overview p { margin: 0; }
         .section-heading { font-size: 18pt; font-weight: 700; line-height: 1.15; }
         .object-heading { left: 70.8pt; top: 431pt; }
-        .description { left: 70.8pt; top: 466pt; width: 464pt; font-size: 11.9pt; line-height: 1.2; white-space: pre-line; }
+        .description { left: 70.8pt; top: 466pt; width: 464pt; font-size: 11.9pt; line-height: 1.2; }
         .description.compact { font-size: 10.7pt; line-height: 1.17; }
         .market-heading { left: 70.8pt; top: 577pt; }
-        .market-copy { left: 70.8pt; top: 612pt; width: 466pt; line-height: 1.18; font-size: 11.8pt; white-space: pre-line; }
+        .market-copy { left: 70.8pt; top: 612pt; width: 466pt; line-height: 1.18; font-size: 11.8pt; }
         .market-copy.compact { font-size: 10.5pt; }
         .price-range { left: 70.8pt; top: 667pt; width: 475pt; font-size: 12pt; font-weight: 700; }
         .sqm-value { left: 70.8pt; top: 695pt; width: 468pt; line-height: 1.2; font-size: 11.8pt; }
@@ -42,7 +42,7 @@
         .orientation { left: 70.8pt; top: 129pt; width: 462pt; line-height: 1.22; font-size: 12pt; }
         .notes-heading { left: 70.8pt; top: 171pt; }
         .legal { left: 70.8pt; top: 206pt; width: 463pt; line-height: 1.2; font-size: 11.8pt; }
-        .notes { left: 70.8pt; top: 261pt; width: 464pt; font-size: 11.8pt; line-height: 1.2; white-space: pre-line; }
+        .notes { left: 70.8pt; top: 261pt; width: 464pt; font-size: 11.8pt; line-height: 1.2; }
         .notes.compact { font-size: 10.5pt; line-height: 1.16; }
         .range-repeat { left: 70.8pt; top: 330pt; font-weight: 700; font-size: 11.8pt; }
         .valuation-date { left: 70.8pt; top: 359pt; font-weight: 700; font-size: 11.8pt; }
@@ -62,6 +62,8 @@
     $descriptionCompact = mb_strlen($letter->object_description) > 365;
     $marketCompact = mb_strlen($letter->market_description) > 230;
     $notesCompact = mb_strlen($letter->valuation_notes) > 325;
+    // Allow emphasis in editable paragraphs without permitting arbitrary HTML.
+    $boldText = fn (string $text) => nl2br(preg_replace('/\\*\\*(.+?)\\*\\*/us', '<strong>$1</strong>', e($text)));
 @endphp
 <div class="page page-one">
     <img src="{{ $brand['watermark'] }}" class="watermark" alt="">
@@ -86,9 +88,9 @@
         @if($letter->room_summary)<p><strong>Zimmer:</strong> {{ $letter->room_summary }}</p>@endif
     </div>
     <div class="block section-heading object-heading">Objektbeschreibung</div>
-    <div class="block description{{ $descriptionCompact ? ' compact' : '' }}">{{ $letter->object_description }}</div>
+    <div class="block description{{ $descriptionCompact ? ' compact' : '' }}">{!! $boldText($letter->object_description) !!}</div>
     <div class="block section-heading market-heading">Marktwerteinschätzung</div>
-    <div class="block market-copy{{ $marketCompact ? ' compact' : '' }}">{{ $letter->market_description }}</div>
+    <div class="block market-copy{{ $marketCompact ? ' compact' : '' }}">{!! $boldText($letter->market_description) !!}</div>
     <div class="block price-range">Geschätzter Marktwert: {{ $money($letter->value_low) }} bis {{ $money($letter->value_high) }}</div>
     @if($pricePerSquareMeter)
         <div class="block sqm-value">
@@ -115,7 +117,7 @@
         Orientierung hinsichtlich eines aktuell erzielbaren Verkaufspreises. Sie stellt kein Verkehrswertgutachten
         im Sinne des § 194 BauGB dar.
     </div>
-    <div class="block notes{{ $notesCompact ? ' compact' : '' }}">{{ $letter->valuation_notes }}</div>
+    <div class="block notes{{ $notesCompact ? ' compact' : '' }}">{!! $boldText($letter->valuation_notes) !!}</div>
     <div class="block range-repeat">Bewertungsspanne: {{ $money($letter->value_low) }} – {{ $money($letter->value_high) }}</div>
     <div class="block valuation-date">Bewertungsstichtag: {{ $letter->valuation_date->locale('de')->translatedFormat('F Y') }}</div>
     @foreach($photos as $position => $dataUrl)
