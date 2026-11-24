@@ -15,7 +15,7 @@
         .page:last-child { page-break-after: auto; }
         .watermark { position: absolute; left: 143.75pt; top: 159pt; width: 315pt; height: 580pt; }
         .logo { position: absolute; left: 388.6pt; top: 28.35pt; width: 142.4pt; height: 110.5pt; }
-        .page-two .logo { left: 411pt; top: 28.35pt; width: 141.7pt; height: 110pt; }
+        .page-two .logo { left: 422pt; top: 15pt; width: 122pt; height: 95pt; }
         .block { position: absolute; z-index: 1; }
         .sender { left: 70.8pt; top: 164pt; width: 294pt; color: #9c563b; font-size: 7.9pt; }
         .recipient { left: 70.8pt; top: 180pt; width: 300pt; font-size: 10.6pt; line-height: 1.34; }
@@ -28,10 +28,10 @@
         .property-overview { left: 70.8pt; top: 351pt; width: 477pt; font-size: 10.5pt; line-height: 1.31; }
         .property-overview p { margin: 0; }
         .section-heading { font-family: Georgia, "DejaVu Serif", serif; font-size: 18pt; font-weight: 400; line-height: 1.17; letter-spacing: -.022em; }
-        .object-heading { left: 70.8pt; top: 433pt; }
+        .object-heading { left: 70.8pt; top: 433pt; width: 465pt; }
         .description { left: 70.8pt; top: 467pt; width: 464pt; font-size: 10.8pt; line-height: 1.30; }
         .description.compact { font-size: 10.15pt; line-height: 1.23; }
-        .market-heading { left: 70.8pt; top: 581pt; }
+        .market-heading { left: 70.8pt; top: 581pt; width: 465pt; }
         .market-copy { left: 70.8pt; top: 612pt; width: 466pt; font-size: 10.65pt; line-height: 1.29; }
         .market-copy.compact { font-size: 10.0pt; line-height: 1.20; }
         .price-range { left: 70.8pt; top: 678pt; width: 475pt; font-size: 11.0pt; line-height: 1.19; font-weight: 700; }
@@ -44,7 +44,7 @@
         .page-two .footer { top: 760pt; }
         .page-number { left: 70.8pt; top: 92pt; font-family: Arial, sans-serif; font-size: 6.1pt; }
         .orientation { left: 70.8pt; top: 127pt; width: 462pt; font-size: 11.0pt; line-height: 1.30; }
-        .notes-heading { left: 70.8pt; top: 173pt; }
+        .notes-heading { left: 70.8pt; top: 173pt; width: 465pt; }
         .legal { left: 70.8pt; top: 207pt; width: 463pt; font-size: 10.5pt; line-height: 1.30; }
         .notes { left: 70.8pt; top: 263pt; width: 464pt; font-size: 10.45pt; line-height: 1.27; }
         .notes.compact { font-size: 9.65pt; line-height: 1.20; }
