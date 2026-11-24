@@ -1,6 +1,8 @@
+import { useRef, useState } from 'react';
 import { Link, useForm, usePage } from '@inertiajs/react';
 import AdminLayout from '@/Components/Admin/AdminLayout';
 import { route } from 'ziggy-js';
+import { prepareValuationLetterPhoto } from '@/lib/prepareValuationLetterPhoto';
 
 const input = 'w-full min-w-0 rounded-lg border border-[#d8d5cd] bg-white px-3 py-2.5 text-sm text-[#172741] outline-none focus:border-[#9c563b] focus:ring-2 focus:ring-[#9c563b]/10';
 const label = 'mb-1.5 block text-xs font-semibold text-[#525851]';
@@ -37,9 +39,48 @@ export default function ValuationLetterEdit({ lead, fields, saved = false, needs
         initialData['remove_photo_' + slot] = false;
     }
     const { data, setData, post, processing, errors, progress, isDirty, defaults } = useForm(initialData);
+    const [photoProcessing, setPhotoProcessing] = useState({});
+    const [photoErrors, setPhotoErrors] = useState({});
+    const latestPhotoSelection = useRef({});
+    const anyPhotoProcessing = Object.values(photoProcessing).some(Boolean);
+
+    const selectPhoto = async (slot, file) => {
+        const field = 'photo_' + slot;
+        const token = (latestPhotoSelection.current[slot] ?? 0) + 1;
+        latestPhotoSelection.current[slot] = token;
+        setData(field, null);
+        setPhotoErrors((current) => ({ ...current, [slot]: null }));
+
+        if (!file) {
+            setPhotoProcessing((current) => ({ ...current, [slot]: false }));
+            return;
+        }
+
+        setPhotoProcessing((current) => ({ ...current, [slot]: true }));
+
+        try {
+            const prepared = await prepareValuationLetterPhoto(file);
+
+            if (latestPhotoSelection.current[slot] === token) {
+                setData(field, prepared);
+            }
+        } catch (error) {
+            if (latestPhotoSelection.current[slot] === token) {
+                setPhotoErrors((current) => ({
+                    ...current,
+                    [slot]: error?.message || 'Das Foto konnte nicht verarbeitet werden.',
+                }));
+            }
+        } finally {
+            if (latestPhotoSelection.current[slot] === token) {
+                setPhotoProcessing((current) => ({ ...current, [slot]: false }));
+            }
+        }
+    };
 
     const submit = (event) => {
         event.preventDefault();
+        if (anyPhotoProcessing || Object.values(photoErrors).some(Boolean)) return;
         post(route('admin.leads.letter.store', lead.id), {
             preserveScroll: true,
             forceFormData: true,
@@ -133,7 +174,7 @@ export default function ValuationLetterEdit({ lead, fields, saved = false, needs
 
                 <section className="rounded-xl border border-[#ddd9d0] bg-white p-5 shadow-sm sm:p-6">
                     <h2 className="text-lg font-semibold text-[#172741]">05 · Fotos für Seite 2</h2>
-                    <p className="mb-5 mt-2 text-xs leading-5 text-[#858982]">Vier Bildpositionen wie in der Vorlage: Foto 1 im Hochformat, Fotos 2–4 im Querformat. Hochgeladene Bilder werden auf das jeweilige Format zugeschnitten und geschützt gespeichert. JPG/PNG, maximal 8 MB je Foto.</p>
+                    <p className="mb-5 mt-2 text-xs leading-5 text-[#858982]">Vier Bildpositionen wie in der Vorlage: Foto 1 im Hochformat, Fotos 2–4 im Querformat. Hochgeladene Bilder werden vor dem Absenden automatisch auf maximal ca. 320 KB pro Foto verkleinert (JPG) und auf dem Server passend zugeschnitten. Deine Originale bleiben unverändert. JPG/PNG, maximal 8 MB je Originalfoto.</p>
                     <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
                         {[1, 2, 3, 4].map((slot) => {
                             const current = photos?.[slot];
@@ -147,8 +188,10 @@ export default function ValuationLetterEdit({ lead, fields, saved = false, needs
                                             ? <img src={current} alt={'Gespeichertes Foto ' + slot} className="h-full w-full object-cover" />
                                             : <span className="px-2 text-center text-xs text-[#95988f]">{selected ? 'Neues Foto ausgewählt' : 'Noch kein Foto'}</span>}
                                     </div>
-                                    <input type="file" accept="image/jpeg,image/png" onChange={(event) => setData('photo_' + slot, event.target.files?.[0] ?? null)} className="w-full min-w-0 text-[11px] text-[#6e716a] file:mr-2 file:rounded file:border-0 file:bg-[#172741] file:px-2 file:py-1.5 file:text-[11px] file:font-semibold file:text-white" />
-                                    {selected && <p className="mt-1 break-all text-[11px] text-[#456044]">{selected.name}</p>}
+                                    <input type="file" accept="image/jpeg,image/png" disabled={processing} onChange={(event) => { const file = event.target.files?.[0] ?? null; event.target.value = ''; void selectPhoto(slot, file); }} className="w-full min-w-0 text-[11px] text-[#6e716a] file:mr-2 file:rounded file:border-0 file:bg-[#172741] file:px-2 file:py-1.5 file:text-[11px] file:font-semibold file:text-white" />
+                                    {photoProcessing[slot] && <p role="status" className="mt-1 text-[11px] text-[#456044]">Foto wird für den Upload verkleinert …</p>}
+                                    {selected && <p className="mt-1 break-all text-[11px] text-[#456044]">{selected.name} · {Math.ceil(selected.size / 1024)} KB</p>}
+                                    {photoErrors[slot] && <p role="alert" className="mt-1 text-xs text-[#a02f27]">{photoErrors[slot]}</p>}
                                     {current && <label className="mt-3 flex items-center gap-2 text-xs text-[#73776e]"><input type="checkbox" checked={Boolean(removed)} onChange={(event) => setData('remove_photo_' + slot, event.target.checked)} />Vorhandenes Foto entfernen</label>}
                                     {errors['photo_' + slot] && <p className="mt-1 text-xs text-[#a02f27]">{errors['photo_' + slot]}</p>}
                                 </div>
@@ -159,8 +202,8 @@ export default function ValuationLetterEdit({ lead, fields, saved = false, needs
                 </section>
 
                 <div className="sticky bottom-3 z-10 flex flex-wrap items-center gap-3 rounded-xl border border-[#d7d3c9] bg-white/95 p-4 shadow-lg">
-                    <button type="submit" disabled={processing} className="rounded-md bg-[#b44637] px-6 py-3 text-sm font-semibold text-white hover:bg-[#963b2f] disabled:opacity-60">
-                        {processing ? 'Wird gespeichert …' : 'Anschreiben speichern'}
+                    <button type="submit" disabled={processing || anyPhotoProcessing || Object.values(photoErrors).some(Boolean)} className="rounded-md bg-[#b44637] px-6 py-3 text-sm font-semibold text-white hover:bg-[#963b2f] disabled:opacity-60">
+                        {processing ? 'Wird gespeichert …' : anyPhotoProcessing ? 'Fotos werden vorbereitet …' : 'Anschreiben speichern'}
                     </button>
                     {saved && !needs_review && <a href={preview_url} target="_blank" rel="noopener noreferrer" className="rounded-md border border-[#172741] px-4 py-3 text-sm font-semibold text-[#172741]">PDF-Vorschau</a>}
                     {saved && !needs_review && <a href={download_url} className="rounded-md border border-[#172741] px-4 py-3 text-sm font-semibold text-[#172741]">PDF herunterladen</a>}
