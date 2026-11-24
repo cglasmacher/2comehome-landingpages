@@ -21,9 +21,9 @@ class ValuationLetterPdfService
             if (! is_string($path) || ! $disk->exists($path)) {
                 continue;
             }
-            // Uploads were normalized to JPEG on receipt; they remain on the
-            // private local disk and are embedded in the PDF, never public URLs.
-            $photos[$slot] = 'data:image/jpeg;base64,'.base64_encode($disk->get($path));
+            // Photos stay on the private local disk. Dompdf reads them inside
+            // the application chroot; no public URL and no data-URI conversion.
+            $photos[$slot] = $disk->path($path);
         }
 
         // Refer to our own SVG assets as local files: Dompdf releases differ in
