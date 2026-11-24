@@ -17,6 +17,9 @@ class SaveValuationLetterRequest extends FormRequest
     {
         $rules = [
             'recipient_name' => ['required', 'string', 'max:180'],
+            'recipient_street' => ['required', 'string', 'max:255'],
+            'recipient_zip' => ['required', 'string', 'max:20'],
+            'recipient_city' => ['required', 'string', 'max:255'],
             'adviser_name' => ['required', 'string', 'max:120'],
             'adviser_role' => ['nullable', 'string', 'max:80'],
             'adviser_mobile' => ['nullable', 'string', 'max:60'],
