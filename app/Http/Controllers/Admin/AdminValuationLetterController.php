@@ -22,6 +22,7 @@ class AdminValuationLetterController extends Controller
     {
         $lead->load(['property', 'valuation', 'valuationLetter']);
         $letter = $lead->valuationLetter;
+        $needsReview = $letter && $lead->property?->updated_at?->gt($letter->updated_at);
         $data = $letter ? [
             ...$letter->only([
                 'recipient_name', 'adviser_name', 'adviser_role', 'adviser_mobile', 'adviser_email',
@@ -53,6 +54,7 @@ class AdminValuationLetterController extends Controller
             ],
             'fields' => $data,
             'saved' => (bool) $letter,
+            'needs_review' => (bool) $needsReview,
             'photos' => $photos,
             'preview_url' => route('admin.leads.letter.preview', $lead),
             'download_url' => route('admin.leads.letter.download', $lead),
@@ -114,6 +116,7 @@ class AdminValuationLetterController extends Controller
     {
         $letter = $lead->valuationLetter;
         abort_unless($letter, 404);
+        abort_if($lead->property?->updated_at?->gt($letter->updated_at), 409, 'Objektdaten wurden nach dem Anschreiben geändert. Bitte prüfen und speichern Sie das Anschreiben erneut.');
 
         return $pdf->stream($lead, $letter);
     }
@@ -122,6 +125,7 @@ class AdminValuationLetterController extends Controller
     {
         $letter = $lead->valuationLetter;
         abort_unless($letter, 404);
+        abort_if($lead->property?->updated_at?->gt($letter->updated_at), 409, 'Objektdaten wurden nach dem Anschreiben geändert. Bitte prüfen und speichern Sie das Anschreiben erneut.');
 
         return $pdf->download($lead, $letter);
     }
