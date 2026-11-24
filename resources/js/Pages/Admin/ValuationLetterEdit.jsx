@@ -108,7 +108,7 @@ export default function ValuationLetterEdit({ lead, fields, saved = false, needs
                         </div>
                     </div>
                     <div className="mt-5">
-                        <TextArea title="Objektbeschreibung · Seite 1 *" name="object_description" value={data.object_description} setData={setData} errors={errors} rows={6} maxLength={530} hint="Die Vorlage hat einen begrenzten Textraum. Bitte den Text prägnant halten; Absätze bleiben erhalten." />
+                        <TextArea title="Objektbeschreibung · Seite 1 *" name="object_description" value={data.object_description} setData={setData} errors={errors} rows={6} maxLength={530} hint="Die Vorlage hat begrenzten Textraum. Zwei Sterne markieren Fettdruck, z. B. **Eigentumswohnung**. Absätze bleiben erhalten." />
                     </div>
                 </section>
 
